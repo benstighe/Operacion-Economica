@@ -1,0 +1,1 @@
+"# Operacion-Economica"  initgit add README.mdgit commit -m "first commit"git branch -M maingit remote add origin https://github.com/benstighe/Operacion-Economica.gitgit push -u origin main
