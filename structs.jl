@@ -8,7 +8,7 @@ struct Generador
 end
 
 # Creating an instance of Generador
-gen = Generador([1, 2, 3], [4, 5, 6], [10.0, 20.0, 30.0], [5.0, 10.0, 15.0])
+#gen = Generador([1, 2, 3], [4, 5, 6], [10.0, 20.0, 30.0], [5.0, 10.0, 15.0])
 
 println("ID: ", gen.ID)
 println("Bus: ", gen.Bus[1])
