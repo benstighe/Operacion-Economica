@@ -1,15 +1,21 @@
 using JuMP, DataFrames, Gurobi, CSV
 include("lectura_datos.jl")
 model = Model(Gurobi.Optimizer)
+#arreglos de parametros
 tiempo=[1:6]
+barras=demanda.ID_Bus
+
+
+#modelo 
+
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[bar.ID,tiempo]) #Theta : angulos de las barras
 
 for t in tiempo
     for i in barras
-
-        @constraint(model, Cumplir_demanda, sum(Pg[id_gen,t] for id_gen in ID_SET_gen_in_barra_i) - 
-        sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in ID_SET_barras_conectadas_a_i) == D[i,t]) 
+        #obtener_generadores esta en lectura de datos()
+        @constraint(model, Cumplir_demanda, sum(Pg[id_gen,t] for id_gen in obtener_generadores_por_bus(gen,i)) - 
+        sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == D[i,t]) 
 
     end
 end
