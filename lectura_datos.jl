@@ -13,6 +13,7 @@ lineas = Lines(lineas_DF[!,1],lineas_DF[!,2],lineas_DF[!,3],lineas_DF[!,4],linea
 demanda = Loads(demanda_DF[!,1], demanda_DF[!,2],demanda_DF[!,3], demanda_DF[!,4], demanda_DF[!,5], demanda_DF[!,6], demanda_DF[!,7])
 bess = Bess(bess_DF[!,1], bess_DF[!,2], bess_DF[!,3], bess_DF[!,4])
 
+
 #para obtener los generadores para cierta barra
 function obtener_generadores_por_bus(gen::Generador, bus::Int64)
     # Crear un vector para almacenar los IDs de los generadores en el bus dado
@@ -40,8 +41,22 @@ function obtener_bus_conectado_bus(lineas::Lines, bus::Int64)
     end
     return lineas_en_bus
 end
-obtener_bus_conectado_bus(lineas,2)
-
+#obtener_bus_conectado_bus(lineas,2)
+#crear diccionario de B  (1/x)
+function crear_diccionario_B(lines::Lines)
+    dict = Dict{Tuple{Int64, Int64}, Float64}()
+    for i in 1:length(lines.FromBus)
+        from_bus= lines.FromBus[i]
+        to_bus= lines.ToBus[i]
+        x= lines.X[i]
+        tupla1= (from_bus, to_bus)
+        tupla2= (to_bus,from_bus)
+        dict[tupla1] = 1/x
+        dict[tupla2] =1/x
+    end
+    return dict
+end
+B=crear_diccionario_B(lineas)
 
 #println("ID: ", gen.ID)
 #println("Bus: ", gen.Bus_Conexion)
