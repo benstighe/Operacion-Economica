@@ -16,18 +16,29 @@ end
 #println("Pmin: ", gen.Pmin[1])
 
 struct Loads
-    ID :: Vector{Int64}
-    Bus :: Vector{Int64}
-    Load_MW :: Vector{Float64}
+    ID_Bus :: Vector{Int64}
+    D_t1 :: Vector{Int64}
+    D_t2 :: Vector{Int64}
+    D_t3 :: Vector{Int64}
+    D_t4 :: Vector{Int64}
+    D_t5 :: Vector{Int64}
+    D_t6 :: Vector{Int64}
 end
 
 struct Lines
     ID :: Vector{Int64}
     FromBus :: Vector{Int64}
     ToBus :: Vector{Int64}
-    B :: Vector{Float64}
-    Fmax :: Vector{Float64}
+    Fmax :: Vector{Int64}
+    X :: Vector{Float64}
+    
 end
 
+struct Bess
+    ID :: Vector{Int64}
+    Cap :: Vector{Int64}
+    Rend :: Vector{Float64}
+    Bus_conexion :: Vector{Int64}
+end
 
 
