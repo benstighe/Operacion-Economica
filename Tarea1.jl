@@ -6,8 +6,8 @@ model = Model(Gurobi.Optimizer)
 
 
 #arreglos de parametros
-tiempo=[1:6]
-barras=demanda.ID_Bus
+tiempo=1:6
+barras=1:length(demanda)
 
 
 function crear_diccionario_B(lines::Lines)
@@ -31,13 +31,13 @@ B=crear_diccionario_B(lineas)
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[bar.ID,tiempo]) #Theta : angulos de las barras
 
-@objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
+@objective(model, Min, sum(generadores[i].Cvariable * Pg[i,t] for i in (1:length(generadores)), t in tiempo)) #Función objetivo, minimizar costos. LISTO
 
 #RESTRICCIÓN DE FLUJO/DEMANDA
 for t in tiempo
     for i in barras
         #obtener_generadores y obtener_bus esta en lectura de datos(queda por definir bien la demanda)
-        @constraint(model, Cumplir_demanda, sum(Pg[id_gen,t] for id_gen in obtener_generadores_por_bus(gen,i)) - 
+        @constraint(model, Cumplir_demanda, sum(Pg[id_gen,t] for id_gen in obtener_generadores_por_bus(generadores,i)) - 
         sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == D[i,t]) 
 
     end
