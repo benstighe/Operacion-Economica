@@ -63,3 +63,5 @@ B=crear_diccionario_B(lineas)
 #println("Pmax: ", gen.Pmax)
 #println("Pmin: ", gen.Pmin)
 #hola
+
+println(demanda)

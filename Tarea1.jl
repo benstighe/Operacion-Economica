@@ -1,9 +1,15 @@
 using JuMP, DataFrames, Gurobi, CSV
 include("lectura_datos.jl")
+
+
 model = Model(Gurobi.Optimizer)
+
+
 #arreglos de parametros
 tiempo=[1:6]
 barras=demanda.ID_Bus
+
+
 function crear_diccionario_B(lines::Lines)
     dict = Dict{Tuple{Int64, Int64}, Float64}()
     for i in 1:length(lines.FromBus)
@@ -17,6 +23,7 @@ function crear_diccionario_B(lines::Lines)
     end
     return dict
 end
+
 B=crear_diccionario_B(lineas)
 
 #modelo 
@@ -24,6 +31,9 @@ B=crear_diccionario_B(lineas)
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[bar.ID,tiempo]) #Theta : angulos de las barras
 
+@objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
+
+#RESTRICCIÓN DE FLUJO/DEMANDA
 for t in tiempo
     for i in barras
         #obtener_generadores y obtener_bus esta en lectura de datos(queda por definir bien la demanda)
