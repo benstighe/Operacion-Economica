@@ -38,17 +38,18 @@ B=crear_diccionario_B(lineas)
 #RESTRICCIÓN DE FLUJO/DEMANDA
 for t in tiempo
     for i in barras
-        #obtener_generadores y obtener_bus esta en lectura de datos(queda por definir bien la demanda)
+        #obtener_generadores y obtener_bus esta en lectura de datos
         @constraint(model, sum(Pg[id_gen,t] for id_gen in obtener_generadores_por_bus(gen,i)) - 
         sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == demanda_DF[i,t+1]) 
 
     end
 end
 
-#este no lo he visto todavia
+
 for t in tiempo
     for k in lineas.ID
-        @constraint(model, (1/lineas.X[k])*(Theta[lineas.FromBus[k], t] - Theta[lineas.ToBus[k], t])  <= lineas.Fmax[k])
+        #agregue el menos aqui (MB)
+        @constraint(model, -lineas.Fmax[k]<=(1/lineas.X[k])*(Theta[lineas.FromBus[k], t] - Theta[lineas.ToBus[k], t])  <= lineas.Fmax[k])
         #-Fmax[k] <= B[[k]]*(Theta[k[0],t]-Theta[k[1],t] <= Fmax[k]))
     end 
 end
@@ -69,6 +70,12 @@ for t in tiempo
         println("i, t, Pg[i,t]: ", i," ", t," ", value(Pg[i,t]))
     end
 end
+for t in tiempo
+    for i in barras
+        println("i, t, theta[i,t]: ", i," ", t," ", value(Theta[i,t]))
+    end
+end
+
 
 
 #falta el de ramplas
