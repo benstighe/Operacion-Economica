@@ -73,3 +73,15 @@ for t in tiempo
     end
 end
 
+resultados = DataFrame(
+    demand = [sum(demanda_DF[i, t+1] for i in 1:nrow(demanda_DF)) for t in tiempo],  # Tomar la demanda para cada tiempo
+    generado_G1 = [value(Pg[1, t]) for t in tiempo],  # Potencia generada por G1 en cada tiempo
+    costo_G1 = gen.Cvariable[1]*[value(Pg[1, t]) for t in tiempo],  # Costo por G1 en cada tiempo
+    generado_G2 = [value(Pg[2, t]) for t in tiempo],  # Potencia generada por G2 en cada tiempo
+    costo_G2 = gen.Cvariable[2]*[value(Pg[2, t]) for t in tiempo],  # Costo por G2 en cada tiempo
+    generado_G3 = [value(Pg[3, t]) for t in tiempo],  # Potencia generada por G3 en cada tiempo
+    costo_G3 = gen.Cvariable[3]*[value(Pg[3, t]) for t in tiempo],  # Costo por G3 en cada tiempo
+    costo_total=gen.Cvariable[1]*[value(Pg[1, t]) for t in tiempo]+gen.Cvariable[2]*[value(Pg[2, t]) for t in tiempo]+
+                gen.Cvariable[3]*[value(Pg[3, t]) for t in tiempo]
+)
+println(resultados)
