@@ -18,7 +18,11 @@ B=crear_diccionario_B(lineas)
 #VARIABLES
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[demanda.ID_Bus,tiempo]) #Theta : angulos de las barras
-@variable(model, [bess.ID,tiempo])
+@variable(model, d[bess.ID,tiempo]) #descarga bateria(puede ser negativo)
+@variable(model, e[bess.ID,tiempo]) #energia bateria
+
+
+
 
 #FUNCION OBJETIVO
 @objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
@@ -26,7 +30,8 @@ B=crear_diccionario_B(lineas)
 #RESTRICCIÓN DE FLUJO/DEMANDA
 for t in tiempo
     for i in barras
-        @constraint(model, sum(Pg[id_gen,t]/100 for id_gen in obtener_generadores_por_bus(gen,i)) - 
+        @constraint(model, sum(Pg[id_gen,t]/100 for id_gen in obtener_generadores_por_bus(gen,i))+
+        sum(d[id_bat,t]/100 for id_bat in obtener_baterias_por_bus(bess,i)) - 
         sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == demanda_DF[i,t+1]/100) 
     end
 end
@@ -51,6 +56,28 @@ for t in 2:length(tiempo)
     for id_gen in gen.ID
         @constraint(model, -gen.Ramp[id_gen]/100 <= ((Pg[id_gen,t]/100) - (Pg[id_gen,t-1]/100))   <= gen.Ramp[id_gen]/100)
     end
+end
+
+#RESTRICCION CARGA INICIAL
+
+for bat_id in bess.ID
+    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*0.7-(d[bat_id,1]/bess.Rend[bat_id])) #ver que capacidad parten 
+    #y ver lo del rendimiento (funciona cuando sale pero cuando entra me hace ruido)
+end 
+
+#RESTRICCION DE CAPACIDAD BATERIAS
+
+for t in 2:length(tiempo)
+    for bat_id in bess.ID
+        @constraint(model,0<=e[bat_id,t]<=bess.Cap[bat_id])
+    end 
+end
+
+#RESTRICCION CARGA Y DESCARGA BATERIAS
+for t in 2:length(tiempo)
+    for bat_id in bess.ID
+        @constraint(model,e[bat_id,t]==e[bat_id,t-1]-(d[bat_id,1]/bess.Rend[bat_id]))
+    end 
 end
 
 optimize!(model)

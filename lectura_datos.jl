@@ -56,3 +56,15 @@ function crear_diccionario_B(lines::Lines)
     end
     return dict
 end
+#para obtener las baterias para cierta barra
+function obtener_baterias_por_bus(bess::Bess, bus::Int64)
+    # Crear un vector para almacenar los IDs de las baterias en el bus dado
+    baterias_en_bus = Int[]
+    # Iterar sobre las baterias y añadir los IDs correspondientes al bus dado
+    for i in 1:length(bess.Bus_conexion)
+        if bess.Bus_conexion[i] == bus
+            push!(baterias_en_bus, bess.ID[i])
+        end
+    end
+    return baterias_en_bus
+end
