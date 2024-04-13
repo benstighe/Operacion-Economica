@@ -7,14 +7,6 @@ struct Generador
     Bus_Conexion :: Vector{Int64}
 end
 
-# Creating an instance of Generador
-#gen = Generador([1, 2, 3], [4, 5, 6], [10.0, 20.0, 30.0], [5.0, 10.0, 15.0])
-
-#println("ID: ", gen.ID)
-#println("Bus: ", gen.Bus[1])
-#println("Pmax: ", gen.Pmax[1])
-#println("Pmin: ", gen.Pmin[1])
-
 struct Loads
     ID_Bus :: Vector{Int64}
     D_t1 :: Vector{Float64}

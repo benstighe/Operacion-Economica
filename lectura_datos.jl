@@ -56,10 +56,3 @@ function crear_diccionario_B(lines::Lines)
     end
     return dict
 end
-B=crear_diccionario_B(lineas)
-
-#println("ID: ", gen.ID)
-#println("Bus: ", gen.Bus_Conexion)
-#println("Pmax: ", gen.Pmax)
-#println("Pmin: ", gen.Pmin)
-#hola
