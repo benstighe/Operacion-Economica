@@ -111,7 +111,8 @@ cons=all_constraints(model; include_variable_in_set_constraints = true)
 df_resultados = DataFrame(Barra = barras)
 for t in tiempo
     column_name = Symbol("Tiempo_$t")
-    resultados_tiempo = [shadow_price(cons[(t-1)*9 + i]) for i in barras]
+    resultados_tiempo = [-shadow_price(cons[(t-1)*9 + i]) for i in barras]
     df_resultados[!, column_name] = resultados_tiempo
 end
+println("PRECIOS SOMBRA")
 println(df_resultados)

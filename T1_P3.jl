@@ -28,11 +28,17 @@ B=crear_diccionario_B(lineas)
 @objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
 
 #RESTRICCIÓN DE FLUJO/DEMANDA
+restr = []
 for t in tiempo
     for i in barras
-        @constraint(model, sum(Pg[id_gen,t]/100 for id_gen in obtener_generadores_por_bus(gen,i))+
-        sum(d[id_bat,t]/100 for id_bat in obtener_baterias_por_bus(bess,i)) - 
-        sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == demanda_DF[i,t+1]/100) 
+        nombre_restriccion = Symbol("restriccion_tiempo", t, "_barra", i)
+        nomb=string("restriccion_tiempo", t, "_barra", i)
+        push!(restr, nomb)
+        @eval begin 
+            @constraint(model,$nombre_restriccion, sum(Pg[id_gen,$t]/100 for id_gen in obtener_generadores_por_bus(gen,$i))+
+            sum(d[id_bat,$t]/100 for id_bat in obtener_baterias_por_bus(bess,$i)) - 
+            sum(B[$i,j]*(Theta[$i,$t]-Theta[j,$t]) for j in obtener_bus_conectado_bus(lineas,$i)) == demanda_DF[$i,$t+1]/100) 
+        end
     end
 end
 
@@ -87,19 +93,19 @@ println("El costo óptimo es : \$", objective_value(model))
 
 println("Para cada nodo el óptimo es el siguiente: ")
 
-for t in tiempo
-    for i in gen.ID
-        println("i, t, Pg[i,t]: ", i," ", t," ", value(Pg[i,t]))
-    end
-end
+# for t in tiempo
+#     for i in gen.ID
+#         println("i, t, Pg[i,t]: ", i," ", t," ", value(Pg[i,t]))
+#     end
+# end
 
-for t in tiempo
-    for i in barras
-        for j in obtener_bus_conectado_bus(lineas,i)
-        println("Tiempo, BarraFrom, BarraTo, Potencia ", t, " ", i, " ", j, " ", (value(Theta[i,t]), value(Theta[j,t])))
-        end
-    end
-end
+# for t in tiempo
+#     for i in barras
+#         for j in obtener_bus_conectado_bus(lineas,i)
+#         println("Tiempo, BarraFrom, BarraTo, Potencia ", t, " ", i, " ", j, " ", (value(Theta[i,t]), value(Theta[j,t])))
+#         end
+#     end
+# end
 
 resultados = DataFrame(
     demand = [sum(demanda_DF[i, t+1] for i in 1:nrow(demanda_DF)) for t in tiempo],  # Tomar la demanda para cada tiempo
@@ -116,3 +122,16 @@ resultados = DataFrame(
                 gen.Cvariable[3]*[value(Pg[3, t]) for t in tiempo])
 
 println(resultados)
+
+#PRECIO SOMBRA
+
+cons=all_constraints(model; include_variable_in_set_constraints = true)
+
+df_resultados = DataFrame(Barra = barras)
+for t in tiempo
+    column_name = Symbol("Tiempo_$t")
+    resultados_tiempo = [-shadow_price(cons[(t-1)*9 + i]) for i in barras]
+    df_resultados[!, column_name] = resultados_tiempo
+end
+println("PRECIOS SOMBRA")
+println(df_resultados)
