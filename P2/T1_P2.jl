@@ -58,7 +58,7 @@ end
 #RESTRICCION 
 
 for t in tiempo
-    @constraint(model, sum(Pg_Insatisfecho[i, t]/100 for i in demanda.ID_Bus) ==  sum(demanda_DF[i,t+1]/100 for i in demanda.ID_Bus) - sum(Pg[j,t]/100 for j in gen.ID))
+    @constraint(model, sum(Pg_Insatisfecho[i, t]/100 for i in demanda.ID_Bus) <=  sum(demanda_DF[i,t+1]/100 for i in demanda.ID_Bus) - sum(Pg[j,t]/100 for j in gen.ID))
 end
 
 
