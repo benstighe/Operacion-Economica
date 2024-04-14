@@ -18,10 +18,11 @@ B=crear_diccionario_B(lineas)
 #VARIABLES
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[demanda.ID_Bus,tiempo]) #Theta : angulos de las barras
-@variable(model, Pg_Insatisfecho[demanda.ID_Bus,tiempo]) #Pg_Insatisfecho : Demanda no satisfecha
+@variable(model, 0 <= Pg_Insatisfecho[demanda.ID_Bus, tiempo]) #Pg_Insatisfecho : Demanda no satisfecha
 
 #FUNCION OBJETIVO
-@objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
+@objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)
+                     + sum(Pg_Insatisfecho[j, t] * 30 for j in demanda.ID_Bus, t in tiempo)) #Función objetivo, minimizar costos. LISTO
 
 #RESTRICCIÓN DE FLUJO/DEMANDA
 for t in tiempo
@@ -33,14 +34,12 @@ end
 
 #RESTRICCION DE FLUJO LIMITE POR LINEAS
 for t in tiempo
-    
-    @constraint(model, -50/100 <= (1/lineas.X[1])*(Theta[1,t] - Theta[2,t]) <= 50/100)
     for k in lineas.ID
-        if k != 1
-            @constraint(model, -lineas.Fmax[k]/100 <= (1/lineas.X[k])*(Theta[lineas.FromBus[k], t] - Theta[lineas.ToBus[k], t]) <= lineas.Fmax[k]/100)
-        end
-    end
+        @constraint(model, -lineas.Fmax[k]/100<=(1/lineas.X[k])*(Theta[lineas.FromBus[k], t] - Theta[lineas.ToBus[k], t])
+                    <= lineas.Fmax[k]/100)
+    end 
 end
+
 
 #RESTRICCION DE LIMITES DE GENERACIÓN
 for t in tiempo
@@ -56,6 +55,11 @@ for t in 2:length(tiempo)
     end
 end
 
+#RESTRICCION 
+
+for t in tiempo
+    @constraint(model, sum(Pg_Insatisfecho[i, t]/100 for i in demanda.ID_Bus) ==  sum(demanda_DF[i,t+1]/100 for i in demanda.ID_Bus) - sum(Pg[j,t]/100 for j in gen.ID))
+end
 
 
 optimize!(model)
@@ -72,10 +76,18 @@ for t in tiempo
 end
 
 for t in tiempo
+    println("Demanda insatisfecha en tiempo: ", t, " ", sum(value(Pg_Insatisfecho[i,t]) for i in barras))
+    println("Demanda en tiempo: ", t, " ",  sum(demanda_DF[i,t+1] for i in demanda.ID_Bus))
+    println("Demanda satisfecha en tiempo: ", t, " ",  sum(value(Pg[j,t]) for j in gen.ID))
+end
+
+#=
+
+for t in tiempo
     for i in barras
         for j in obtener_bus_conectado_bus(lineas,i)
         println("Tiempo, BarraFrom, BarraTo, Potencia ", t, " ", i, " ", j, " ", (value(Theta[i,t]), value(Theta[j,t])))
         end
     end
 end
-
+=#
