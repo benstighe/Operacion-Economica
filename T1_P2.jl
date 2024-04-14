@@ -18,7 +18,7 @@ B=crear_diccionario_B(lineas)
 #VARIABLES
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[demanda.ID_Bus,tiempo]) #Theta : angulos de las barras
-@variable(model, Pg_Insatisfecho[]) #Pg_Insatisfecho : Demanda no satisfecha
+@variable(model, Pg_Insatisfecho[demanda.ID_Bus,tiempo]) #Pg_Insatisfecho : Demanda no satisfecha
 
 #FUNCION OBJETIVO
 @objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
@@ -27,7 +27,7 @@ B=crear_diccionario_B(lineas)
 for t in tiempo
     for i in barras
         @constraint(model, sum(Pg[id_gen,t]/100 for id_gen in obtener_generadores_por_bus(gen,i)) - 
-        sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == demanda_DF[i,t+1]/100 - Pg_Insatisfecho[i,t+1]/100) 
+        sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == demanda_DF[i,t+1]/100 - Pg_Insatisfecho[i,t]/100) 
     end
 end
 
