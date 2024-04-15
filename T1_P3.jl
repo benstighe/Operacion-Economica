@@ -18,7 +18,8 @@ B=crear_diccionario_B(lineas)
 #VARIABLES
 @variable(model, Pg[gen.ID,tiempo] ) #Pg : Cantidad de energía generada [MWh]
 @variable(model, Theta[demanda.ID_Bus,tiempo]) #Theta : angulos de las barras
-@variable(model, d[bess.ID,tiempo]) #descarga bateria(puede ser negativo)
+@variable(model, d[bess.ID,tiempo]) #descarga bateria
+@variable(model, c[bess.ID,tiempo]) #carga bateria
 @variable(model, e[bess.ID,tiempo]) #energia bateria
 
 
@@ -36,7 +37,7 @@ for t in tiempo
         push!(restr, nomb)
         @eval begin 
             @constraint(model,$nombre_restriccion, sum(Pg[id_gen,$t]/100 for id_gen in obtener_generadores_por_bus(gen,$i))+
-            sum(d[id_bat,$t]/100 for id_bat in obtener_baterias_por_bus(bess,$i)) - 
+            sum(d[id_bat,$t]/100-c[id_bat,$t]/100 for id_bat in obtener_baterias_por_bus(bess,$i)) - 
             sum(B[$i,j]*(Theta[$i,$t]-Theta[j,$t]) for j in obtener_bus_conectado_bus(lineas,$i)) == demanda_DF[$i,$t+1]/100) 
         end
     end
@@ -63,28 +64,44 @@ for t in 2:length(tiempo)
         @constraint(model, -gen.Ramp[id_gen]/100 <= ((Pg[id_gen,t]/100) - (Pg[id_gen,t-1]/100))   <= gen.Ramp[id_gen]/100)
     end
 end
+#RESTRICCIONES BATERIAS
+
+#RESTRICCION VARIABLES CARGA Y DESCARGA (no pueden ser mayor a la capacidad)
+for t in tiempo
+    for bat_id in bess.ID
+        @constraint(model,0<=d[bat_id,t]<=bess.Cap[bat_id])
+        @constraint(model,0<=c[bat_id,t]<=bess.Cap[bat_id])
+    end 
+end
 
 #RESTRICCION CARGA INICIAL
+#se hace asi y no e[bat_id,1]==bess.Cap[bat_id]*3*0.5 ya que asi hay flujos en t=1
+for bat_id in bess.ID
+    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*3*0.5+(c[bat_id,1]*bess.Rend[bat_id])-(d[bat_id,1]/bess.Rend[bat_id])) 
+end 
+
+#RESTRICCION CARGA Final
 
 for bat_id in bess.ID
-    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*0.7-(d[bat_id,1]/bess.Rend[bat_id])) #ver que capacidad parten 
-    #y ver lo del rendimiento (funciona cuando sale pero cuando entra me hace ruido)
+    @constraint(model,e[bat_id,6]==bess.Cap[bat_id]*3*0.5) 
 end 
 
 #RESTRICCION DE CAPACIDAD BATERIAS
 
-for t in 2:length(tiempo)
+for t in tiempo
     for bat_id in bess.ID
-        @constraint(model,0<=e[bat_id,t]<=bess.Cap[bat_id])
+        @constraint(model,0<=e[bat_id,t]<=bess.Cap[bat_id]*3)
     end 
 end
 
 #RESTRICCION CARGA Y DESCARGA BATERIAS
+
 for t in 2:length(tiempo)
     for bat_id in bess.ID
-        @constraint(model,e[bat_id,t]==e[bat_id,t-1]-(d[bat_id,1]/bess.Rend[bat_id]))
+        @constraint(model,e[bat_id,t]==e[bat_id,t-1]+(c[bat_id,t]*bess.Rend[bat_id])-(d[bat_id,t]/bess.Rend[bat_id]))
     end 
 end
+
 
 optimize!(model)
 
@@ -109,9 +126,9 @@ println("Para cada nodo el óptimo es el siguiente: ")
 
 resultados = DataFrame(
     demand = [sum(demanda_DF[i, t+1] for i in 1:nrow(demanda_DF)) for t in tiempo],  # Tomar la demanda para cada tiempo
-    bateria_1=[value(d[1,t]) for t in tiempo],#bat1
-    bateria_2=[value(d[2,t]) for t in tiempo],#bat2
-    bateria_3=[value(d[3,t]) for t in tiempo],#bat3
+    bat_1_descarga=[value(d[1,t]-c[1,t]) for t in tiempo],#bat1desc
+    bat_2_descarga=[value(d[2,t]-c[2,t]) for t in tiempo],#bat2desc
+    bat_3_descarga=[value(d[3,t]-c[3,t]) for t in tiempo],#bat3desc
     generado_G1 = [value(Pg[1, t]) for t in tiempo],  # Potencia generada por G1 en cada tiempo
     costo_G1 = gen.Cvariable[1]*[value(Pg[1, t]) for t in tiempo],  # Costo por G1 en cada tiempo
     generado_G2 = [value(Pg[2, t]) for t in tiempo],  # Potencia generada por G2 en cada tiempo
@@ -122,6 +139,21 @@ resultados = DataFrame(
                 gen.Cvariable[3]*[value(Pg[3, t]) for t in tiempo])
 
 println(resultados)
+println("Baterias informacion")
+resultados1 = DataFrame(
+    bat_1=[value(e[1,t]) for t in tiempo],#bat1
+    bat_2=[value(e[2,t]) for t in tiempo],#bat2
+    bat_3=[value(e[3,t]) for t in tiempo],#bat3
+    bat_1_descarga=[value(d[1,t]) for t in tiempo],#bat1desc
+    bat_2_descarga=[value(d[2,t]) for t in tiempo],#bat2desc
+    bat_3_descarga=[value(d[3,t]) for t in tiempo],#bat3desc
+    bat_1_carga=[value(c[1,t]) for t in tiempo],#bat1desc
+    bat_2_carga=[value(c[2,t]) for t in tiempo],#bat2desc
+    bat_3_carga=[value(c[3,t]) for t in tiempo],#bat3desc
+)
+
+println(resultados1)
+
 
 #PRECIO SOMBRA
 
