@@ -22,7 +22,7 @@ B=crear_diccionario_B(lineas)
 
 #FUNCION OBJETIVO
 @objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)
-                     + sum(Pg_Insatisfecho[j, t] * 3000000 for j in demanda.ID_Bus, t in tiempo)) #Función objetivo, minimizar costos. LISTO
+                     + sum(Pg_Insatisfecho[j, t] * 30 for j in demanda.ID_Bus, t in tiempo)) #Función objetivo, minimizar costos. LISTO
 
 #RESTRICCIÓN DE FLUJO/DEMANDA
 for t in tiempo
@@ -48,26 +48,27 @@ for t in tiempo
     end
 end
 
+#RESTRICCION BARRA SLACK
+for t in tiempo
+    @constraint(model, Theta[1,t] == 0)
+end
+
+
+#=
 #RESTRICCIÓN DE RAMPAS
 for t in 2:length(tiempo)
     for id_gen in gen.ID
         @constraint(model, -gen.Ramp[id_gen]/100 <= ((Pg[id_gen,t]/100) - (Pg[id_gen,t-1]/100))   <= gen.Ramp[id_gen]/100)
     end
 end
-
-#RESTRICCION 
-
-for t in tiempo
-    @constraint(model, sum(Pg_Insatisfecho[i, t]/100 for i in demanda.ID_Bus) ==  sum(demanda_DF[i,t+1]/100 for i in demanda.ID_Bus) - sum(Pg[j,t]/100 for j in gen.ID))
-end
-
+=#
 
 optimize!(model)
 
 
-println("El costo óptimo es : \$", objective_value(model) - sum(value(Pg_Insatisfecho[i,t]) for i in barras, t in tiempo)*3000000)
+println("El costo óptimo es : \$", objective_value(model) - sum(value(Pg_Insatisfecho[i,t]) for i in barras, t in tiempo)*30000)
+println("Pago por multa: ", sum(value(Pg_Insatisfecho[i,t]) for i in barras, t in tiempo)*30)
 
-println("Para cada nodo el óptimo es el siguiente: ")
 
 for t in tiempo
     for i in gen.ID
@@ -75,11 +76,14 @@ for t in tiempo
     end
 end
 
+
 for t in tiempo
     println("Demanda insatisfecha en tiempo: ", t, " ", sum(value(Pg_Insatisfecho[i,t]) for i in barras))
-    println("Demanda en tiempo: ", t, " ",  sum(demanda_DF[i,t+1] for i in demanda.ID_Bus))
-    println("Demanda de barras 2, 4, 5, 7 y 8, en tiempo: ", t, " ",  sum(demanda_DF[i,t+1] for i in [2,4,5,7,8]))
     println("Demanda satisfecha en tiempo: ", t, " ",  sum(value(Pg[j,t]) for j in gen.ID))
+    println("-----------------------------------")
+end
+
+for t in [3,4]
     for k in lineas.ID
         println("Flujo en linea ", lineas.FromBus[k], "-", lineas.ToBus[k], ", en el tiempo: ", t, " ", B[lineas.FromBus[k],lineas.ToBus[k]]*
                                                         (value(Theta[lineas.FromBus[k],t]) - value(Theta[lineas.ToBus[k],t])))
@@ -87,6 +91,7 @@ for t in tiempo
     
     println("-----------------------------------")
 end
+
 
 #=
 
