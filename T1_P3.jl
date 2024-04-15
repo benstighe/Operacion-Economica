@@ -141,9 +141,9 @@ resultados = DataFrame(
 println(resultados)
 println("Baterias informacion")
 resultados1 = DataFrame(
-    bat_1=[value(e[1,t]) for t in tiempo],#bat1
-    bat_2=[value(e[2,t]) for t in tiempo],#bat2
-    bat_3=[value(e[3,t]) for t in tiempo],#bat3
+    str_bat_1=[value(e[1,t]) for t in tiempo],#bat1
+    str_bat_2=[value(e[2,t]) for t in tiempo],#bat2
+    str_bat_3=[value(e[3,t]) for t in tiempo],#bat3
     bat_1_descarga=[value(d[1,t]) for t in tiempo],#bat1desc
     bat_2_descarga=[value(d[2,t]) for t in tiempo],#bat2desc
     bat_3_descarga=[value(d[3,t]) for t in tiempo],#bat3desc
