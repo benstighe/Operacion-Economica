@@ -32,6 +32,7 @@ for t in tiempo
     end
 end
 
+
 #RESTRICCION DE FLUJO LIMITE POR LINEAS
 for t in tiempo
     for k in lineas.ID

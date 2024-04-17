@@ -43,6 +43,12 @@ for t in tiempo
     end
 end
 
+#Barra 1 SLACK
+for t in tiempo
+    @constraint(model,Theta[1,t]==0)
+end 
+
+
 #RESTRICCION DE FLUJO LIMITE POR LINEAS
 for t in tiempo
     for k in lineas.ID
@@ -58,12 +64,15 @@ for t in tiempo
     end
 end
 
+#=
 #RESTRICCIÓN DE RAMPAS
 for t in 2:length(tiempo)
     for id_gen in gen.ID
         @constraint(model, -gen.Ramp[id_gen]/100 <= ((Pg[id_gen,t]/100) - (Pg[id_gen,t-1]/100))   <= gen.Ramp[id_gen]/100)
     end
 end
+=#
+
 #RESTRICCIONES BATERIAS
 
 #RESTRICCION VARIABLES CARGA Y DESCARGA (no pueden ser mayor a la capacidad)
@@ -77,7 +86,7 @@ end
 #RESTRICCION CARGA INICIAL
 #se hace asi y no e[bat_id,1]==bess.Cap[bat_id]*3*0.5 ya que asi hay flujos en t=1
 for bat_id in bess.ID
-    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*3*0.5+(c[bat_id,1]*bess.Rend[bat_id])-(d[bat_id,1]/bess.Rend[bat_id])) 
+    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*3*0.5+(c[bat_id,1]*(bess.Rend[bat_id]^0.5))-(d[bat_id,1]/(bess.Rend[bat_id]^0.5))) 
 end 
 
 #RESTRICCION CARGA Final
@@ -98,7 +107,7 @@ end
 
 for t in 2:length(tiempo)
     for bat_id in bess.ID
-        @constraint(model,e[bat_id,t]==e[bat_id,t-1]+(c[bat_id,t]*bess.Rend[bat_id])-(d[bat_id,t]/bess.Rend[bat_id]))
+        @constraint(model,e[bat_id,t]==e[bat_id,t-1]+(c[bat_id,t]*(bess.Rend[bat_id]^0.5))-(d[bat_id,t]/(bess.Rend[bat_id]^0.5)))
     end 
 end
 
