@@ -66,7 +66,8 @@ end
 optimize!(model)
 
 
-println("El costo óptimo es : \$", objective_value(model) - sum(value(Pg_Insatisfecho[i,t]) for i in barras, t in tiempo)*30000)
+println("El costo óptimo es : \$", objective_value(model) )
+# sum(value(Pg_Insatisfecho[i,t]) for i in barras, t in tiempo)*30000
 println("Pago por multa: ", sum(value(Pg_Insatisfecho[i,t]) for i in barras, t in tiempo)*30)
 
 
