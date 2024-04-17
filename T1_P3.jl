@@ -48,6 +48,7 @@ for t in tiempo
     @constraint(model,Theta[1,t]==0)
 end 
 
+
 #RESTRICCION DE FLUJO LIMITE POR LINEAS
 for t in tiempo
     for k in lineas.ID
@@ -85,7 +86,7 @@ end
 #RESTRICCION CARGA INICIAL
 #se hace asi y no e[bat_id,1]==bess.Cap[bat_id]*3*0.5 ya que asi hay flujos en t=1
 for bat_id in bess.ID
-    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*3*0.5+(c[bat_id,1]*(bess.Rend[bat_id]/2))-(d[bat_id,1]/(bess.Rend[bat_id]/2))) 
+    @constraint(model,e[bat_id,1]==bess.Cap[bat_id]*3*0.5+(c[bat_id,1]*(bess.Rend[bat_id]^0.5))-(d[bat_id,1]/(bess.Rend[bat_id]^0.5))) 
 end 
 
 #RESTRICCION CARGA Final
@@ -106,7 +107,7 @@ end
 
 for t in 2:length(tiempo)
     for bat_id in bess.ID
-        @constraint(model,e[bat_id,t]==e[bat_id,t-1]+(c[bat_id,t]*(bess.Rend[bat_id]/2))-(d[bat_id,t]/(bess.Rend[bat_id]/2)))
+        @constraint(model,e[bat_id,t]==e[bat_id,t-1]+(c[bat_id,t]*(bess.Rend[bat_id]^0.5))-(d[bat_id,t]/(bess.Rend[bat_id]^0.5)))
     end 
 end
 
