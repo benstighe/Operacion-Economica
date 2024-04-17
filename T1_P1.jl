@@ -60,12 +60,14 @@ for t in tiempo
     end
 end
 
+#=
 #RESTRICCIÓN DE RAMPAS
 for t in 2:length(tiempo)
     for id_gen in gen.ID
         @constraint(model, -gen.Ramp[id_gen]/100 <= ((Pg[id_gen,t]/100) - (Pg[id_gen,t-1]/100))   <= gen.Ramp[id_gen]/100)
     end
 end
+=#
 
 optimize!(model)
 
