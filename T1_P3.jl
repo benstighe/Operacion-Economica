@@ -43,6 +43,11 @@ for t in tiempo
     end
 end
 
+#Barra 1 SLACK
+for t in tiempo
+    @constraint(model,Theta[1,t]==0)
+end 
+
 #RESTRICCION DE FLUJO LIMITE POR LINEAS
 for t in tiempo
     for k in lineas.ID

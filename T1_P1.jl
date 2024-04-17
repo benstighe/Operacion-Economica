@@ -22,6 +22,7 @@ B=crear_diccionario_B(lineas)
 #FUNCION OBJETIVO
 @objective(model, Min, sum(gen.Cvariable[i] * Pg[i,t] for i in gen.ID, t in tiempo)) #Función objetivo, minimizar costos. LISTO
 
+
 #RESTRICCIÓN DE FLUJO/DEMANDA
 restr = []
 for t in tiempo
@@ -40,6 +41,10 @@ for t in tiempo
     end
 end
 
+#Barra 1 SLACK
+for t in tiempo
+    @constraint(model,Theta[1,t]==0)
+end 
 #RESTRICCION DE FLUJO LIMITE POR LINEAS
 for t in tiempo
     for k in lineas.ID
