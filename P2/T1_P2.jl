@@ -25,10 +25,18 @@ B=crear_diccionario_B(lineas)
                      + sum(Pg_Insatisfecho[j, t] * 30 for j in demanda.ID_Bus, t in tiempo)) #Función objetivo, minimizar costos. LISTO
 
 #RESTRICCIÓN DE FLUJO/DEMANDA
+restr = []
 for t in tiempo
     for i in barras
-        @constraint(model, sum(Pg[id_gen,t]/100 for id_gen in obtener_generadores_por_bus(gen,i)) - 
-        sum(B[i,j]*(Theta[i,t]-Theta[j,t]) for j in obtener_bus_conectado_bus(lineas,i)) == demanda_DF[i,t+1]/100 - Pg_Insatisfecho[i,t]/100) 
+        nombre_restriccion = Symbol("restriccion_tiempo", t, "_barra", i)
+        nomb=string("restriccion_tiempo", t, "_barra", i)
+        push!(restr, nomb)
+        @eval begin
+            @constraint(model, $nombre_restriccion, 
+            sum(Pg[id_gen,$t]/100 for id_gen in obtener_generadores_por_bus(gen,$i)) - 
+            sum(B[$i,j]*(Theta[$i,$t]-Theta[j,$t]) for j in obtener_bus_conectado_bus(lineas,$i)) == 
+            demanda_DF[$i,$t+1]/100 - Pg_Insatisfecho[$i,$t]/100) 
+        end
     end
 end
 
@@ -78,6 +86,7 @@ for t in tiempo
     end
 end
 
+#=
 
 for t in tiempo
     println("Demanda insatisfecha en tiempo: ", t, " ", sum(value(Pg_Insatisfecho[i,t]) for i in barras))
@@ -85,7 +94,7 @@ for t in tiempo
     println("-----------------------------------")
 end
 
-for t in [3,4]
+for t in tiempo
     for k in lineas.ID
         println("Flujo en linea ", lineas.FromBus[k], "-", lineas.ToBus[k], ", en el tiempo: ", t, " ", B[lineas.FromBus[k],lineas.ToBus[k]]*
                                                         (value(Theta[lineas.FromBus[k],t]) - value(Theta[lineas.ToBus[k],t])))
@@ -94,7 +103,7 @@ for t in [3,4]
     println("-----------------------------------")
 end
 
-
+=#
 #=
 
 for t in tiempo
@@ -105,3 +114,14 @@ for t in tiempo
     end
 end
 =#
+
+cons=all_constraints(model; include_variable_in_set_constraints = true)
+
+df_resultados = DataFrame(Barra = barras)
+for t in tiempo
+    column_name = Symbol("Tiempo_$t")
+    resultados_tiempo = [-shadow_price(cons[(t-1)*9 + i]) for i in barras]
+    df_resultados[!, column_name] = resultados_tiempo
+end
+println("PRECIOS SOMBRA")
+println(df_resultados)

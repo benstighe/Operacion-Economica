@@ -69,9 +69,9 @@ for t in 2:length(tiempo)
     end
 end
 
+
+=#
 optimize!(model)
-
-
 println("El costo óptimo es : \$", objective_value(model))
 
 println("Para cada nodo el óptimo es el siguiente: ")
@@ -82,6 +82,12 @@ println("Para cada nodo el óptimo es el siguiente: ")
      end
  end
 
+ for t in tiempo
+    for k in lineas.ID
+        println("Flujo en linea ", lineas.FromBus[k], "-", lineas.ToBus[k], ", en el tiempo: ", t, " ", B[lineas.FromBus[k],lineas.ToBus[k]]*
+                                                        (value(Theta[lineas.FromBus[k],t]) - value(Theta[lineas.ToBus[k],t])))
+    end
+end
 # for t in tiempo
 #     for i in barras
 #         for j in obtener_bus_conectado_bus(lineas,i)
