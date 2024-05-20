@@ -75,6 +75,7 @@ end
 ### Unit commitment example ###
 
 
+
 BusSet = [1,2]
 TimeSet = 1:24
 GeneratorSet = [1,2,3]
