@@ -1,5 +1,5 @@
 ### Load packages ###
-using JuMP, GLP, XLSX, Statistics
+using JuMP, GLPK, XLSX, Statistics
 
 
 ### Function for solving unit commitment ###
