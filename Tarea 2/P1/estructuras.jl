@@ -6,6 +6,8 @@ struct Generador
     CFijo :: Float64
     CEncendido :: Float64
     Ramp :: Float64
+    min_up :: Int64
+    min_down :: Int64
 end
 
 struct Loads
@@ -30,5 +32,8 @@ struct Renewables
     CFijo :: Float64
     CEncendido :: Float64
     Ramp :: Float64
+    min_up :: Int64
+    min_down :: Int64
+    Generation :: Vector{Float64}
 end
 
