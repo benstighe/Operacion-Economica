@@ -19,7 +19,6 @@ struct Lines
     ToBus :: Int64
     Fmax :: Float64
     X :: Float64
-    R :: Float64
     
 end
 
