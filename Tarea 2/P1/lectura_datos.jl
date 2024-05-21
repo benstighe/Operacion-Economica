@@ -10,7 +10,6 @@ Renewables = caso_014["Renewables"]
 
 lectura_demanda = Demand["B3:Y16"]
 
-
 demanda = []
 
 for j in 1:14
