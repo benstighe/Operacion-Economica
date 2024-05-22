@@ -1,6 +1,6 @@
 ### Load packages ###
 using JuMP, GLPK, XLSX, Statistics
-
+include("lectura_datos.jl")
 
 ### Function for solving unit commitment ###
 function UnitCommitmentFunction(Data)
@@ -37,9 +37,7 @@ function UnitCommitmentFunction(Data)
         == sum( (1/LineReactance[l]) * (Theta[LineFromBus[l],t] - Theta[LineToBus[l],t]) for l in LineSet if LineFromBus[l] == i)
         + sum( (1/LineReactance[l]) * (Theta[LineToBus[l],t] - Theta[LineFromBus[l],t]) for l in LineSet if LineToBus[l] == i))
 
-
-    ### Las modificaciones son las siguientes: ###
-
+    
     #Min Up/Down:
     @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[i,k] 
     for k in t:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[i,t])
@@ -62,9 +60,8 @@ function UnitCommitmentFunction(Data)
         GeneratorStartUpShutDownRampInMW[i]*u[i,t])
 
     # transmission line limits
-    @constraint(model, CapacidadesLineas[i in LineSet, j in LineSet, t in 1:T], (1/LineReactance[i,j]) * (Theta[i,t] - 
-        Theta[j,t]) <= LineMaxFlow[i,j])
-
+    @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
+        Theta[LineToBus[i],t]) <= LineMaxFlow[i])
     
     # Optimizacion
     JuMP.optimize!(model)
@@ -76,29 +73,27 @@ end
 
 
 
-BusSet = [1,2]
+BusSet = id_buses
 TimeSet = 1:24
-GeneratorSet = [1,2,3]
-LineSet = [1]
+GeneratorSet = [i for i in 1:length(bus_gen)] 
+LineSet = id_lines
+Pd=[load.Demanda for load in loads_list]
 
-Pd = [  [21.70,	17.70,	15.55,	13.94,	13.41,	16.09,	18.77,	20.91,	21.98,	23.59,	23.86,	22.52,	21.45,	20.38,	23.59,	24.13,	22.79,	23.86,	25.20,	26.27,	26.81,	24.13,	23.33,	21.98],
-        [94.20,	76.81,	67.50,	60.52,	58.19,	69.83,	81.47,	90.78,	95.44,	102.42,	103.58,	97.76,	93.11,	88.45,	102.42,	104.75,	98.93,	103.58,	109.40,	114.06,	116.39,	104.75,	101.26,	95.44]]
+GeneratorBusLocation = bus_gen
+GeneratorPminInMW = pmin_gen
+GeneratorPmaxInMW = pmax_gen
+GeneratorRampInMW = rampin_gen
+GeneratorStartUpShutDownRampInMW = Srampin_gen
+GeneratorMinimumUpTimeInHours = minup_gen
+GeneratorMinimumDownTimeInHours = mindown_gen
+GeneratorStartUpCostInUSD = st_cost_gen
+GeneratorFixedCostInUSDperHour = fx_cost_gen
+GeneratorVariableCostInUSDperMWh = v_cost_gen
 
-GeneratorBusLocation = [1,1,2]
-GeneratorPminInMW = [0,0,10]
-GeneratorPmaxInMW = [50,50,150]
-GeneratorRampInMW = [5,5,15]
-GeneratorStartUpShutDownRampInMW = [50,50,150]
-GeneratorMinimumUpTimeInHours = [4,4,8]
-GeneratorMinimumDownTimeInHours = [4,4,8]
-GeneratorStartUpCostInUSD = [1500,1500,4500]
-GeneratorFixedCostInUSDperHour = [300,300,900]
-GeneratorVariableCostInUSDperMWh = [20,50,80]
-
-LineFromBus = [1]
-LineToBus = [2]
-LineReactance = [0.06]
-LineMaxFlow = [500]
+LineFromBus = frombus_lines
+LineToBus = tobus_lines
+LineReactance = Xbus_lines
+LineMaxFlow = fmax_lines
 
 Data = [BusSet,TimeSet,GeneratorSet,LineSet,Pd,GeneratorBusLocation,GeneratorPminInMW,
 GeneratorPmaxInMW,GeneratorRampInMW,GeneratorStartUpShutDownRampInMW,GeneratorMinimumUpTimeInHours,
