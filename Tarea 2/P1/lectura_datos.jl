@@ -68,7 +68,7 @@ end
 
 
 for i in eachindex(lectura_gen_pmin)
-    push!(gen_list, Generador(i, lectura_gen_pmin[i], lectura_gen_pmax[i], lectura_gen_cvariable[i],
+    push!(gen_list, Generador(lectura_gen_bus[i], lectura_gen_pmin[i], lectura_gen_pmax[i], lectura_gen_cvariable[i],
         lectura_gen_cfijo[i], lectura_gen_con[i], lectura_gen_ramp[i], lectura_gen_minup[i], lectura_gen_mindown[i] ))
 end
 
@@ -98,7 +98,7 @@ for i in eachindex(lectura_ren_bus)
     for j in 1:24
         push!(lista_generacion, lectura_ren_generacion[i,j])
     end
-    push!(lista_renovables, Renewables(i, lectura_ren_pmin[i], lectura_ren_pmax[i], lectura_ren_cvariable[i],
+    push!(lista_renovables, Renewables(lectura_ren_bus[i], lectura_ren_pmin[i], lectura_ren_pmax[i], lectura_ren_cvariable[i],
     lectura_ren_cfijo[i], lectura_ren_con[i], lectura_ren_ramp[i], lectura_ren_minup[i], lectura_ren_mindown[i], lista_generacion ))
 end
 
