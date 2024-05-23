@@ -121,8 +121,8 @@ println("ID barras")
 id_buses = [load.ID_Bus for load in loads_list]
 println(id_buses)
 println("--------------------------------------------------------")
-println("ID generadores")
-println([i for i in 1:length(bus_gen)])
+#println("ID generadores")
+#println([i for i in 1:length(bus_gen)])
 println("--------------------------------------------------------")
 println("buses generadores")
 bus_gen = [gen.Bus_Conexion for gen in gen_list]

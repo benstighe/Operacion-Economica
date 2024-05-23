@@ -17,14 +17,14 @@ function UnitCommitmentFunction(Data)
     @variable(model, u[GeneratorSet,TimeSet], Bin) #u es si se enciende el generador. u = 1: Se enciende i en el tiempo t, u = 0: No se enciende i en t.
     @variable(model, v[GeneratorSet,TimeSet], Bin) #v es si se apaga el generador.  v = 1: Se apaga i en el tiempo t, v = 0: No se apaga i en t.
     @variable(model, Pg[GeneratorSet,TimeSet]) #Pg : Cantidad de energía generada en MWh
-    @variable(model, Theta[BusSet,TimeSet]) # Creo que Theta es el defase (angulo)
+    @variable(model, Theta[BusSet,TimeSet]) # Theta es el defase (angulo)
 
-    @objective(model, Min, sum(GeneratorFixedCostInUSDperHour[i] * x[i,t]
-        + GeneratorStartUpCostInUSD[i] * u[i,t]
-        + GeneratorVariableCostInUSDperMWh[i] * Pg[i,t] for i in GeneratorSet, t in TimeSet))
+    @objective(model, Min,  sum(GeneratorFixedCostInUSDperHour[i] * x[i,t]
+                            + GeneratorStartUpCostInUSD[i] * u[i,t]
+                            + GeneratorVariableCostInUSDperMWh[i] * Pg[i,t] for i in GeneratorSet, t in TimeSet))
 
-    @constraint(model, LogicConstraintBorder[i in GeneratorSet, t in 1:1], x[i,t] - 0 == u[i,t] - v[i,t]) # Funciones lógicas
-    @constraint(model, LogicConstraint[i in GeneratorSet, t in 2:T], x[i,t] - x[i,t-1] == u[i,t] - v[i,t])
+    @constraint(model, LogicConstraintBorder[i in GeneratorSet, t in 1:1], x[i,t] - 0 == u[i,t] - v[i,t]) #Restricción binaria en tiempo 1
+    @constraint(model, LogicConstraint[i in GeneratorSet, t in 2:T], x[i,t] - x[i,t-1] == u[i,t] - v[i,t]) #Restricción binaria para el resto del tiempo.
 
     @constraint(model, PMinConstraint[i in GeneratorSet, t in 1:T], GeneratorPminInMW[i] * x[i,t] <= Pg[i,t]) # Pmin <= Pg
     @constraint(model, PMaxConstraint[i in GeneratorSet, t in 1:T], Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
@@ -45,12 +45,21 @@ function UnitCommitmentFunction(Data)
     @constraint(model, MinEncendido2[i in GeneratorSet, t in T-GeneratorMinimumUpTimeInHours[i]+1:T], sum(x[i,k] - u[i,t] 
     for k in t:T) >= 0)    
     
+
     #Min Up/Down:(segun yo estas estan malas)
     @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[i,k] 
     for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[i,t])
 
     @constraint(model, MinApagado2[i in GeneratorSet, t in T-GeneratorMinimumDownTimeInHours[i]+1:T], sum(1 - x[i,k] - v[i,t] 
     for k in t:T) >= 0)
+
+#=
+    @constraint(model, MinUpTime[i in GeneratorSet, t in TimeSet], sum(x[i,k] for k in t-GeneratorMinimumUpTimeInHours[i]:t-1) >= 
+                GeneratorMinimumUpTimeInHours[i]*v[i,t])
+    
+    @constraint(model, MinDownTime[i in GeneratorSet, t in TimeSet], sum(1-x[i,k] for k in t-GeneratorMinimumDownTimeInHours[i]:t-1) >= 
+    GeneratorMinimumDownTimeInHours[i]*u[i,t])
+=#
 
     #Ramp Down 
     @constraint(model, RampasDown[i in GeneratorSet, t in 2:T], -GeneratorRampInMW[i]*x[i,t] 
