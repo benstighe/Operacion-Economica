@@ -146,6 +146,21 @@ for ren in lista_renovables
 end
 println(pmax_gen)
 println("--------------------------------------------------------")
+println("tipo generadores")
+tipo_gen = ["No renovable" for gen in gen_list]
+for ren in lista_renovables
+    push!(tipo_gen, "Renovable")
+end
+println(tipo_gen)
+println("--------------------------------------------------------")
+println("produccion generadores")
+prod_gen = [[] for gen in gen_list]
+for ren in lista_renovables
+    vect=ren.Generation
+    push!(prod_gen, vect)
+end
+println(prod_gen)
+println("--------------------------------------------------------")
 println("pmin generadores")
 pmin_gen = [gen.Pmin for gen in gen_list]
 for ren in lista_renovables

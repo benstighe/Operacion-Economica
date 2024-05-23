@@ -1,5 +1,5 @@
 ### Load packages ###
-using JuMP, GLPK, XLSX, Statistics
+using JuMP, XLSX, Statistics, Gurobi
 include("lectura_datos.jl")
 
 ### Function for solving unit commitment ###
@@ -7,11 +7,11 @@ function UnitCommitmentFunction(Data)
     BusSet = Data[1]; TimeSet = Data[2]; GeneratorSet = Data[3]; LineSet = Data[4]; Pd = Data[5]; GeneratorBusLocation = Data[6]; GeneratorPminInMW = Data[7]; GeneratorPmaxInMW = Data[8];
     GeneratorRampInMW = Data[9]; GeneratorStartUpShutDownRampInMW = Data[10]; GeneratorMinimumUpTimeInHours = Data[11]; GeneratorMinimumDownTimeInHours = Data[12];
     GeneratorStartUpCostInUSD = Data[13]; GeneratorFixedCostInUSDperHour = Data[14]; GeneratorVariableCostInUSDperMWh = Data[15];
-    GeneratorVariableCostInUSDperMWh = Data[16]; LineFromBus = Data[17]; LineToBus = Data[18]; LineReactance = Data[19]; LineMaxFlow = Data[20];
+    GeneratorVariableCostInUSDperMWh = Data[16]; LineFromBus = Data[17]; LineToBus = Data[18]; LineReactance = Data[19]; LineMaxFlow = Data[20];Tipo_Generador=Data[21];Generacion_renovable=Data[22];
 
     T = length(TimeSet)
 
-    model = Model(GLPK.Optimizer)
+    model = Model(Gurobi.Optimizer)
 
     @variable(model, x[GeneratorSet,TimeSet], Bin) #x es el estado del generador (encendido o apagado) (ON/OFF)
     @variable(model, u[GeneratorSet,TimeSet], Bin) #u es si se enciende el generador. u = 1: Se enciende i en el tiempo t, u = 0: No se enciende i en t.
@@ -51,10 +51,6 @@ function UnitCommitmentFunction(Data)
 
     @constraint(model, MinApagado2[i in GeneratorSet, t in T-GeneratorMinimumDownTimeInHours[i]+1:T], sum(1 - x[i,k] - v[i,t] 
     for k in t:T) >= 0)
-    
-    # #LO QUE YO HICE
-    # @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[i,k] 
-    # for k in t-:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[i,t])
 
     #Ramp Down 
     @constraint(model, RampasDown[i in GeneratorSet, t in 2:T], -GeneratorRampInMW[i]*x[i,t] 
@@ -66,6 +62,15 @@ function UnitCommitmentFunction(Data)
     # transmission line limits
     @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
         Theta[LineToBus[i],t]) <= LineMaxFlow[i])
+
+    #Generador renovables
+    for gen in 1:length(GeneratorSet)
+        for t in 1:T
+            if Tipo_Generador[gen]=="Renovable"
+                @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
+            end
+        end
+    end
     
     # Optimizacion
     JuMP.optimize!(model)
@@ -93,6 +98,8 @@ GeneratorMinimumDownTimeInHours = mindown_gen
 GeneratorStartUpCostInUSD = st_cost_gen
 GeneratorFixedCostInUSDperHour = fx_cost_gen
 GeneratorVariableCostInUSDperMWh = v_cost_gen
+Tipo_Generador=tipo_gen
+Generacion_renovable=prod_gen
 
 LineFromBus = frombus_lines
 LineToBus = tobus_lines
@@ -103,7 +110,7 @@ Data = [BusSet,TimeSet,GeneratorSet,LineSet,Pd,GeneratorBusLocation,GeneratorPmi
 GeneratorPmaxInMW,GeneratorRampInMW,GeneratorStartUpShutDownRampInMW,GeneratorMinimumUpTimeInHours,
 GeneratorMinimumDownTimeInHours,GeneratorStartUpCostInUSD,GeneratorFixedCostInUSDperHour,
 GeneratorVariableCostInUSDperMWh,GeneratorVariableCostInUSDperMWh,LineFromBus,LineToBus,
-LineReactance,LineMaxFlow]
+LineReactance,LineMaxFlow,Tipo_Generador,Generacion_renovable]
 
 Results = UnitCommitmentFunction(Data)
 model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5];
