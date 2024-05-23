@@ -1,5 +1,5 @@
 ### Load packages ###
-using JuMP, XLSX, Statistics, Gurobi
+using JuMP, XLSX, Statistics, Gurobi, DataFrames
 include("lectura_datos.jl")
 
 ### Function for solving unit commitment ###
@@ -125,8 +125,61 @@ Results = UnitCommitmentFunction(Data)
 model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5];
 
 println("Total cost: ", JuMP.objective_value(model))
+
+
+
 for i in GeneratorSet
     for t in TimeSet
-        println("i, t, x[i,t], Pg[i,t]: ", i, ", ", t, ", ", JuMP.value(x[i,t]), ", ", JuMP.value(Pg[i,t]))
+#=        println("Costos de generación para el generador ", i, " en el tiempo ", t, ": ", 
+        JuMP.value(Pg[i,t])*GeneratorVariableCostInUSDperMWh[i] )
+
+        println("Costos de encender para el generador ", i, " en el tiempo ", t, ": ", 
+        GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )
+
+        println("Costos de  para el generador ", i, " en el tiempo ", t, ": ", 
+        GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )=#
+        #println("i, t, x[i,t], Pg[i,t]: ", i, ", ", t, ", ", JuMP.value(x[i,t]), ", ", JuMP.value(Pg[i,t]))
     end
+end
+
+costo_startup = sum(value(u[i, t]) * GeneratorStartUpCostInUSD[i] for i in GeneratorSet for t in 1:24)
+costo_fijo = sum(value(x[i, t]) * GeneratorFixedCostInUSDperHour[i] for i in GeneratorSet for t in 1:24)
+costo_variable = sum(value(Pg[i, t]) * GeneratorVariableCostInUSDperMWh[i] for i in GeneratorSet for t in 1:24)
+println("Costo de encedido total: ", costo_startup)
+println("Costo fijo total: ", costo_fijo)
+println("Costo variable de generación total: ", costo_variable)
+
+costos_df = DataFrame(Variable=["Costo Total", "Costo de Encendido Total", "Costo Fijo Total", "Costo Variable Total"],
+                      Valor=[JuMP.objective_value(model), costo_startup, costo_fijo, costo_variable])
+
+
+generacion_df = DataFrame(Generador=GeneratorSet)
+
+for t in 1:24
+    generacion_df[!, Symbol("Hora $t")] = [JuMP.value(Pg[i, t]) for i in GeneratorSet]
+end
+transposed_df = permutedims(generacion_df)
+rename!(transposed_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
+delete!(transposed_df,[1])
+insertcols!(transposed_df , 1 , "Hora" => TimeSet)
+
+
+onoff_df = DataFrame(Generador=GeneratorSet)
+
+for t in 1:24
+    onoff_df[!, Symbol("Hora $t")] = [JuMP.value(x[i, t]) for i in GeneratorSet]
+end
+transposed_onoff_df = permutedims(onoff_df)
+println(transposed_onoff_df)
+rename!(transposed_onoff_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
+delete!(transposed_onoff_df,[1])
+insertcols!(transposed_onoff_df , 1 , "Hora" => TimeSet)
+
+XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
+    XLSX.addsheet!(xf, "Estado ON-OFF")
+    XLSX.addsheet!(xf, "Generación")
+    XLSX.writetable!(xf["Generación"], Tables.columntable(transposed_df))
+    XLSX.writetable!(xf["Estado ON-OFF"], Tables.columntable(transposed_onoff_df))
+    XLSX.addsheet!(xf, "Costos")
+    XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
 end
