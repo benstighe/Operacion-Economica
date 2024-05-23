@@ -48,7 +48,7 @@ println(eolico_pronostico)
 
 #solar
 for j in 1:20
-    for t in 1:24
+    for t in 6:19
         dist = Normal(0, dev_estandar_solar[j,t])
         epsilon = rand(dist, 1)
         global solar_pronostico[j,t] = max(0.0, lectura_ren_generacion[j+40,t] + epsilon[1])
