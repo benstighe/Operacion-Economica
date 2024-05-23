@@ -16,7 +16,7 @@ lectura_demanda = Demanda["B3:Y120"]
 demanda = []
 loads_list = []
 
-for j in 1:14
+for j in 1:118
     lista_barra = []
     for i in 1:24
         push!(lista_barra, lectura_demanda[14*(i-1)+j])
@@ -37,11 +37,7 @@ lectura_lineas_reactancia = Lineas["E2:E187"]
 
 lines_list = []
 
-for i in 1:length(lectura_lineas_reactancia)
-    for j in 1:2
-        lectura_lineas_from_to[i,j] = parse(Int, lectura_lineas_from_to[i,j][4:end])
-    end
-end
+
 
 for i in eachindex(lectura_lineas_reactancia)
         push!(lines_list, Lines(i, lectura_lineas_from_to[i,1], lectura_lineas_from_to[i,2],
@@ -63,9 +59,6 @@ lectura_gen_mindown = Generadores["J2:J55"]
 
 gen_list = []
 
-for i in eachindex(lectura_gen_bus)
-    lectura_gen_bus[i] = parse(Int, lectura_gen_bus[i][4:end])
-end
 
 
 for i in eachindex(lectura_gen_pmin)
@@ -91,9 +84,7 @@ lectura_ren_generacion = Renovables["B3:Y62"]
 
 lista_renovables = []
 
-for i in eachindex(lectura_ren_bus)
-    lectura_ren_bus[i] = parse(Int, lectura_ren_bus[i][4:end])
-end
+
 
 for i in eachindex(lectura_ren_bus)
     lista_generacion = []
