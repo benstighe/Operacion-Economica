@@ -162,6 +162,7 @@ transposed_df = permutedims(generacion_df)
 rename!(transposed_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
 delete!(transposed_df,[1])
 insertcols!(transposed_df , 1 , "Hora" => TimeSet)
+insertcols!(transposed_df , 9 , "Demanda horaria" => [sum(Pd[i][t] for i in BusSet) for t in TimeSet])
 
 
 onoff_df = DataFrame(Generador=GeneratorSet)
