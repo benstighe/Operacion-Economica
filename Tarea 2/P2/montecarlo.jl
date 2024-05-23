@@ -29,17 +29,28 @@ for i in 1:20
     end
 end
 
+eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
+solar_pronostico = lectura_ren_generacion[41:60, 1:24]
+
 
 #eolico
 for j in 1:40
     for t in 1:24
         dist = Normal(0,dev_estandar_eolico[j,t])
-        x = rand(dist,1)
-        println(x)
+        epsilon = rand(dist,1)
+        global eolico_pronostico[j,t] = lectura_ren_generacion[j,t] + epsilon[1]
     end 
 end 
 
-
-
+println(eolico_pronostico)
 
 #solar
+for j in 1:20
+    for t in 1:24
+        dist = Normal(0,dev_estandar_solar[j,t])
+        epsilon = rand(dist,1)
+        global solar_pronostico[j,t] = lectura_ren_generacion[j+40,t] + epsilon[1]
+    end 
+end 
+
+println(solar_pronostico)
