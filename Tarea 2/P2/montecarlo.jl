@@ -55,4 +55,4 @@ for j in 1:20
     end 
 end 
 
-println(solar_pronostico)
+vcat(eolico_pronostico,solar_pronostico)
