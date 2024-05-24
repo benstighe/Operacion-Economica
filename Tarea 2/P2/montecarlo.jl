@@ -35,24 +35,27 @@ eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
 solar_pronostico = lectura_ren_generacion[41:60, 1:24]
 
 
-#eolico
-for j in 1:40
-    for t in 1:24
-        dist = Normal(0, dev_estandar_eolico[j,t])
-        epsilon = rand(dist, 1)
-        global eolico_pronostico[j,t] = max(0.0, lectura_ren_generacion[j,t] + epsilon[1])
+for semilla in 1:100
+    Random.seed!(semilla)
+    #eolico
+    for j in 1:40
+        for t in 1:24
+            dist = Normal(0, dev_estandar_eolico[j,t])
+            epsilon = rand(dist, 1)
+            global eolico_pronostico[j,t] = max(0.0, lectura_ren_generacion[j,t] + epsilon[1])
+        end 
     end 
-end 
 
-println(eolico_pronostico)
+    println(eolico_pronostico)
 
-#solar
-for j in 1:20
-    for t in 6:19
-        dist = Normal(0, dev_estandar_solar[j,t])
-        epsilon = rand(dist, 1)
-        global solar_pronostico[j,t] = max(0.0, lectura_ren_generacion[j+40,t] + epsilon[1])
+    #solar
+    for j in 1:20
+        for t in 6:19
+            dist = Normal(0, dev_estandar_solar[j,t])
+            epsilon = rand(dist, 1)
+            global solar_pronostico[j,t] = max(0.0, lectura_ren_generacion[j+40,t] + epsilon[1])
+        end 
     end 
-end 
-
-vcat(eolico_pronostico,solar_pronostico)
+    vcat(eolico_pronostico,solar_pronostico)
+    println(eolico_pronostico)
+end
