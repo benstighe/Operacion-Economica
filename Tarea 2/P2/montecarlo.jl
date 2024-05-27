@@ -56,6 +56,6 @@ for semilla in 1:100
             global solar_pronostico[j,t] = max(0.0, lectura_ren_generacion[j+40,t] + epsilon[1])
         end 
     end 
-    vcat(eolico_pronostico,solar_pronostico)
-    println(eolico_pronostico)
+    vcat(eolico_pronostico, solar_pronostico)
+    print(eolico_pronostico)
 end
