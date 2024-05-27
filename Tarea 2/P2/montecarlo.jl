@@ -63,6 +63,6 @@ for semilla in 1:100
             suma_solar=suma_solar+solar_pronostico[j,t]
         end 
     end 
-    push!(solar_montecarlo, solar_pronostico)
-    push!(suma_solar_montecarlo, suma_solar)
+    vcat(eolico_pronostico,solar_pronostico)
+    println(eolico_pronostico)
 end
