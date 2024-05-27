@@ -1,4 +1,4 @@
-using Distributions, Plots, Random
+using Distributions, Plots, Random,Statistics
 include("lectura_datos118.jl")
 
 Random.seed!(69)
@@ -11,11 +11,6 @@ Random.seed!(69)
 κ_t_eolico_array = collect(κ_t_eolico)
 κ_t_solar_array = collect(κ_t_solar)
 
-
-
-
-
-#println(lectura_ren_generacion[1,2]) #(gen,hora)
 dev_estandar_eolico = lectura_ren_generacion[1:40, 1:24]
 dev_estandar_solar = lectura_ren_generacion[41:60, 1:24]
 #eolico
@@ -30,39 +25,117 @@ for i in 1:20
         dev_estandar_solar[i,t] = lectura_ren_generacion[i,t]*κ_t_solar_array[t]
     end
 end
-
+#creo sus largos
 eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
 solar_pronostico = lectura_ren_generacion[41:60, 1:24]
-
+#para obtener cada uno de los pronosticos, cada elemento es uno de los 100
 eolico_montecarlo=[]
 solar_montecarlo=[]
 #finalmente cada lista tiene cada simulacion para todos los generadores en cada tiempo
-suma_eolico_montecarlo=[]#arreglar que sea para cada t
+suma_eolico_montecarlo=[]
 suma_solar_montecarlo=[]
+suma_total_montecarlo=[]
+#Relleno estas lista_renovables
 for semilla in 1:100
     Random.seed!(semilla)
     #eolico
-    suma_eolico=0
-    for j in 1:40
-        for t in 1:24
+    semilla_eolico_suma=[]
+    for t in 1:24
+        suma_eolico=0
+        for j in 1:40
             dist = Normal(0, dev_estandar_eolico[j,t])
             epsilon = rand(dist, 1)
             global eolico_pronostico[j,t] = max(0.0, lectura_ren_generacion[j,t] + epsilon[1])
             suma_eolico=suma_eolico+eolico_pronostico[j,t]
         end 
+        push!(semilla_eolico_suma, suma_eolico)
     end 
     push!(eolico_montecarlo, eolico_pronostico)
-    push!(suma_eolico_montecarlo, suma_eolico)
+    push!(suma_eolico_montecarlo, semilla_eolico_suma)
     #solar
-    suma_solar=0
-    for j in 1:20
-        for t in 6:19
+    semilla_solar_suma=[]
+    for t in 1:24
+        suma_solar=0
+        for j in 1:20
             dist = Normal(0, dev_estandar_solar[j,t])
             epsilon = rand(dist, 1)
             global solar_pronostico[j,t] = max(0.0, lectura_ren_generacion[j+40,t] + epsilon[1])
             suma_solar=suma_solar+solar_pronostico[j,t]
         end 
+        push!(semilla_solar_suma, suma_solar)
     end 
-    vcat(eolico_pronostico,solar_pronostico)
-    println(eolico_pronostico)
+    suma_total=semilla_solar_suma.+semilla_eolico_suma
+    push!(solar_montecarlo, solar_pronostico)
+    push!(suma_solar_montecarlo, semilla_solar_suma)
+    push!(suma_total_montecarlo, suma_total)
 end
+#Obtengo los percentiles de cada una
+eol_percentil_90_sup=[]
+eol_percentil_90_inf=[]
+eol_percentil_99_sup=[]
+eol_percentil_99_inf=[]
+eol_promedio=[]
+sol_percentil_90_sup=[]
+sol_percentil_90_inf=[]
+sol_percentil_99_sup=[]
+sol_percentil_99_inf=[]
+sol_promedio=[]
+tot_percentil_90_sup=[]
+tot_percentil_90_inf=[]
+tot_percentil_99_sup=[]
+tot_percentil_99_inf=[]
+tot_promedio=[]
+for t in 1:24
+    push!(eol_percentil_90_sup, quantile([lista[t] for lista in suma_eolico_montecarlo], 0.90))
+    push!(eol_percentil_90_inf,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.10))
+    push!(eol_percentil_99_sup,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.99))
+    push!(eol_percentil_99_inf ,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.01))
+    push!(eol_promedio , mean([lista[t] for lista in suma_eolico_montecarlo]))
+    push!(sol_percentil_90_sup, quantile([lista[t] for lista in suma_solar_montecarlo], 0.90))
+    push!(sol_percentil_90_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.10))
+    push!(sol_percentil_99_sup , quantile([lista[t] for lista in suma_solar_montecarlo], 0.99))
+    push!(sol_percentil_99_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.01))
+    push!(sol_promedio , mean([lista[t] for lista in suma_solar_montecarlo]))
+    push!(tot_percentil_90_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.90))
+    push!(tot_percentil_90_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.10))
+    push!(tot_percentil_99_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.99))
+    push!(tot_percentil_99_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.01))
+    push!(tot_promedio , mean([lista[t] for lista in suma_total_montecarlo]))
+end
+
+# Iniciar el gráfico
+horas = 1:24
+plot()
+plot(title = "Generación Eólica")
+for lista in suma_eolico_montecarlo
+    plot!(horas, lista, label="", lw=1)  # `label=""` para no mostrar etiquetas y `lw=1` para líneas delgadas
+end
+plot!(horas,eol_percentil_90_inf,label="percentil_90(inf)",lw=5,color=:blue)
+plot!(horas,eol_percentil_90_sup,label="percentil_90(sup)",lw=5,color=:blue)
+plot!(horas,eol_percentil_99_inf,label="percentil_90(inf)",lw=5,color=:green)
+plot!(horas,eol_percentil_99_sup,label="percentil_90(sup)",lw=5,color=:green)
+plot!(horas,eol_promedio,label="Media",lw=3,color=:red)
+display(plot!())
+#Solar
+plot()
+plot(title = "Generación Solar")
+for lista in suma_solar_montecarlo
+    plot!(horas, lista, label="", lw=1)  # `label=""` para no mostrar etiquetas y `lw=1` para líneas delgadas
+end
+plot!(horas,sol_percentil_90_inf,label="percentil_90(inf)",lw=2,color=:blue)
+plot!(horas,sol_percentil_90_sup,label="percentil_90(sup)",lw=2,color=:blue)
+plot!(horas,sol_percentil_99_inf,label="percentil_90(inf)",lw=2,color=:green)
+plot!(horas,sol_percentil_99_sup,label="percentil_90(sup)",lw=2,color=:green)
+plot!(horas,sol_promedio,label="Media",lw=2,color=:red)
+display(plot!())
+plot()
+plot(title = "Generación Total")
+for lista in suma_total_montecarlo
+    plot!(horas, lista, label="", lw=1)  # `label=""` para no mostrar etiquetas y `lw=1` para líneas delgadas
+end
+plot!(horas,tot_percentil_90_inf,label="percentil_90(inf)",lw=3,color=:blue)
+plot!(horas,tot_percentil_90_sup,label="percentil_90(sup)",lw=3,color=:blue)
+plot!(horas,tot_percentil_99_inf,label="percentil_90(inf)",lw=3,color=:green)
+plot!(horas,tot_percentil_99_sup,label="percentil_90(sup)",lw=3,color=:green)
+plot!(horas,tot_promedio,label="Media",lw=3,color=:red)
+display(plot!())
