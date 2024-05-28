@@ -1,6 +1,6 @@
 ### Load packages ###
 using JuMP, XLSX, Statistics, Gurobi, DataFrames
-include("lectura_datos.jl")
+include("lectura_datos_118_p1.jl")
 
 ### Function for solving unit commitment ###
 function UnitCommitmentFunction(Data)
@@ -38,7 +38,7 @@ function UnitCommitmentFunction(Data)
         + sum( (1/LineReactance[l]) * (Theta[LineToBus[l],t] - Theta[LineFromBus[l],t]) for l in LineSet if LineToBus[l] == i))
 
 
-    #Min Up/Down:/(segun yo estas estan malas)
+    #Min Up/Down:
     @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[i,k] 
     for k in t:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[i,t])
     
@@ -46,20 +46,12 @@ function UnitCommitmentFunction(Data)
     for k in t:T) >= 0)    
     
 
-    #Min Up/Down:(segun yo estas estan malas)
+    #Min Up/Down:
     @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[i,k] 
     for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[i,t])
 
     @constraint(model, MinApagado2[i in GeneratorSet, t in T-GeneratorMinimumDownTimeInHours[i]+1:T], sum(1 - x[i,k] - v[i,t] 
     for k in t:T) >= 0)
-
-#=
-    @constraint(model, MinUpTime[i in GeneratorSet, t in TimeSet], sum(x[i,k] for k in t-GeneratorMinimumUpTimeInHours[i]:t-1) >= 
-                GeneratorMinimumUpTimeInHours[i]*v[i,t])
-    
-    @constraint(model, MinDownTime[i in GeneratorSet, t in TimeSet], sum(1-x[i,k] for k in t-GeneratorMinimumDownTimeInHours[i]:t-1) >= 
-    GeneratorMinimumDownTimeInHours[i]*u[i,t])
-=#
 
     #Ramp Down 
     @constraint(model, RampasDown[i in GeneratorSet, t in 2:T], -GeneratorRampInMW[i]*x[i,t] 
