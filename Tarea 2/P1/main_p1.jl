@@ -1,6 +1,6 @@
 ### Load packages ###
 using JuMP, XLSX, Statistics, Gurobi, DataFrames
-include("lectura_datos.jl")
+include("lectura_datos_118_p1.jl")
 
 ### Function for solving unit commitment ###
 function UnitCommitmentFunction(Data)
@@ -12,7 +12,7 @@ function UnitCommitmentFunction(Data)
     T = length(TimeSet)
 
     model = Model(Gurobi.Optimizer)
-
+    set_optimizer_attribute(model, "MIPGap", 0.001)
     @variable(model, x[GeneratorSet,TimeSet], Bin) #x es el estado del generador (encendido o apagado) (ON/OFF)
     @variable(model, u[GeneratorSet,TimeSet], Bin) #u es si se enciende el generador. u = 1: Se enciende i en el tiempo t, u = 0: No se enciende i en t.
     @variable(model, v[GeneratorSet,TimeSet], Bin) #v es si se apaga el generador.  v = 1: Se apaga i en el tiempo t, v = 0: No se apaga i en t.
@@ -171,7 +171,7 @@ for t in 1:24
     onoff_df[!, Symbol("Hora $t")] = [JuMP.value(x[i, t]) for i in GeneratorSet]
 end
 transposed_onoff_df = permutedims(onoff_df)
-println(transposed_onoff_df)
+#println(transposed_onoff_df)
 rename!(transposed_onoff_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
 delete!(transposed_onoff_df,[1])
 insertcols!(transposed_onoff_df , 1 , "Hora" => TimeSet)

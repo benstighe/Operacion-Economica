@@ -1,7 +1,7 @@
 ### Load packages ###
 using JuMP, XLSX, Statistics, Gurobi, DataFrames
-include("lectura_datos.jl")
-
+include("lectura_datos118.jl")
+include("montecarlo.jl")
 ### Function for solving unit commitment ###
 function UnitCommitmentFunction(Data)
     BusSet = Data[1]; TimeSet = Data[2]; GeneratorSet = Data[3]; LineSet = Data[4]; Pd = Data[5]; GeneratorBusLocation = Data[6]; GeneratorPminInMW = Data[7]; GeneratorPmaxInMW = Data[8];
@@ -12,7 +12,7 @@ function UnitCommitmentFunction(Data)
     T = length(TimeSet)
 
     model = Model(Gurobi.Optimizer)
-
+    set_optimizer_attribute(model, "MIPGap", 0.001)
     @variable(model, x[GeneratorSet,TimeSet], Bin) #x es el estado del generador (encendido o apagado) (ON/OFF)
     @variable(model, u[GeneratorSet,TimeSet], Bin) #u es si se enciende el generador. u = 1: Se enciende i en el tiempo t, u = 0: No se enciende i en t.
     @variable(model, v[GeneratorSet,TimeSet], Bin) #v es si se apaga el generador.  v = 1: Se apaga i en el tiempo t, v = 0: No se apaga i en t.
@@ -38,7 +38,7 @@ function UnitCommitmentFunction(Data)
         + sum( (1/LineReactance[l]) * (Theta[LineToBus[l],t] - Theta[LineFromBus[l],t]) for l in LineSet if LineToBus[l] == i))
 
 
-    #Min Up/Down:/(segun yo estas estan malas)
+    #Min Up/Down:
     @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[i,k] 
     for k in t:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[i,t])
     
@@ -46,7 +46,7 @@ function UnitCommitmentFunction(Data)
     for k in t:T) >= 0)    
     
 
-    #Min Up/Down:(segun yo estas estan malas)
+    #Min Up/Down:
     @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[i,k] 
     for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[i,t])
 
@@ -80,10 +80,15 @@ function UnitCommitmentFunction(Data)
             end
         end
     end
-    #arreglar un poco
-    @constraint(model, RES[ t in 1:T], 
-        sum(x[k,t]*GeneratorPmaxInMW[k] for k in GeneratorSet)
-        - Pd[i][t]==reserva90[t])
+    #esto es el caso si renovables generan menos de lo esperado
+    @constraint(model, RES[t in 1:T], 
+        sum(GeneratorPmaxInMW[k]*x[k,t] for k in GeneratorSet)
+        >= sum(Pd[i][t] for i in BusSet) + reserva_99[t])
+    #Si renovables generan mas de lo esperado
+    @constraint(model, RES1[ t in 1:T], 
+        sum(GeneratorPminInMW[k]*x[k,t] for k in GeneratorSet)
+        <= sum(Pd[i][t] for i in BusSet) - reserva_99[t])
+
 
     # Optimizacion
     JuMP.optimize!(model)
@@ -132,19 +137,19 @@ println("Total cost: ", JuMP.objective_value(model))
 
 
 
-for i in GeneratorSet
-    for t in TimeSet
-#=        println("Costos de generación para el generador ", i, " en el tiempo ", t, ": ", 
-        JuMP.value(Pg[i,t])*GeneratorVariableCostInUSDperMWh[i] )
+# for i in GeneratorSet
+#     for t in TimeSet
+# #=        println("Costos de generación para el generador ", i, " en el tiempo ", t, ": ", 
+#         JuMP.value(Pg[i,t])*GeneratorVariableCostInUSDperMWh[i] )
 
-        println("Costos de encender para el generador ", i, " en el tiempo ", t, ": ", 
-        GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )
+#         println("Costos de encender para el generador ", i, " en el tiempo ", t, ": ", 
+#         GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )
 
-        println("Costos de  para el generador ", i, " en el tiempo ", t, ": ", 
-        GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )=#
-        #println("i, t, x[i,t], Pg[i,t]: ", i, ", ", t, ", ", JuMP.value(x[i,t]), ", ", JuMP.value(Pg[i,t]))
-    end
-end
+#         println("Costos de  para el generador ", i, " en el tiempo ", t, ": ", 
+#         GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )=#
+#         #println("i, t, x[i,t], Pg[i,t]: ", i, ", ", t, ", ", JuMP.value(x[i,t]), ", ", JuMP.value(Pg[i,t]))
+#     end
+# end
 
 costo_startup = sum(value(u[i, t]) * GeneratorStartUpCostInUSD[i] for i in GeneratorSet for t in 1:24)
 costo_fijo = sum(value(x[i, t]) * GeneratorFixedCostInUSDperHour[i] for i in GeneratorSet for t in 1:24)
@@ -175,17 +180,17 @@ for t in 1:24
     onoff_df[!, Symbol("Hora $t")] = [JuMP.value(x[i, t]) for i in GeneratorSet]
 end
 transposed_onoff_df = permutedims(onoff_df)
-println(transposed_onoff_df)
+#println(transposed_onoff_df)
 rename!(transposed_onoff_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
 delete!(transposed_onoff_df,[1])
 insertcols!(transposed_onoff_df , 1 , "Hora" => TimeSet)
 
 #CAMBIAR PARA P2
-# XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
-#     XLSX.addsheet!(xf, "Estado ON-OFF")
-#     XLSX.addsheet!(xf, "Generación")
-#     XLSX.writetable!(xf["Generación"], Tables.columntable(transposed_df))
-#     XLSX.writetable!(xf["Estado ON-OFF"], Tables.columntable(transposed_onoff_df))
-#     XLSX.addsheet!(xf, "Costos")
-#     XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
-# end
+XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
+    XLSX.addsheet!(xf, "Estado ON-OFF")
+    XLSX.addsheet!(xf, "Generación")
+    XLSX.writetable!(xf["Generación"], Tables.columntable(transposed_df))
+    XLSX.writetable!(xf["Estado ON-OFF"], Tables.columntable(transposed_onoff_df))
+    XLSX.addsheet!(xf, "Costos")
+    XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
+end

@@ -85,22 +85,38 @@ tot_percentil_90_inf=[]
 tot_percentil_99_sup=[]
 tot_percentil_99_inf=[]
 tot_promedio=[]
+eol_90_sup=[]
 for t in 1:24
-    push!(eol_percentil_90_sup, quantile([lista[t] for lista in suma_eolico_montecarlo], 0.90))
-    push!(eol_percentil_90_inf,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.10))
-    push!(eol_percentil_99_sup,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.99))
-    push!(eol_percentil_99_inf ,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.01))
+    push!(eol_percentil_90_sup, mean([lista[t] for lista in suma_eolico_montecarlo])+(std([lista[t] for lista in suma_eolico_montecarlo])*1.645))
+    push!(eol_percentil_90_inf,mean([lista[t] for lista in suma_eolico_montecarlo])-(std([lista[t] for lista in suma_eolico_montecarlo])*1.645))
+    push!(eol_percentil_99_sup,mean([lista[t] for lista in suma_eolico_montecarlo])+(std([lista[t] for lista in suma_eolico_montecarlo])*2.575))
+    push!(eol_percentil_99_inf ,mean([lista[t] for lista in suma_eolico_montecarlo])-(std([lista[t] for lista in suma_eolico_montecarlo])*2.575))
     push!(eol_promedio , mean([lista[t] for lista in suma_eolico_montecarlo]))
-    push!(sol_percentil_90_sup, quantile([lista[t] for lista in suma_solar_montecarlo], 0.90))
-    push!(sol_percentil_90_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.10))
-    push!(sol_percentil_99_sup , quantile([lista[t] for lista in suma_solar_montecarlo], 0.99))
-    push!(sol_percentil_99_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.01))
+    push!(sol_percentil_90_sup,  mean([lista[t] for lista in suma_solar_montecarlo])+(std([lista[t] for lista in suma_solar_montecarlo])*1.645))
+    push!(sol_percentil_90_inf , mean([lista[t] for lista in suma_solar_montecarlo])-(std([lista[t] for lista in suma_solar_montecarlo])*1.645))
+    push!(sol_percentil_99_sup , mean([lista[t] for lista in suma_solar_montecarlo])+(std([lista[t] for lista in suma_solar_montecarlo])*2.575))
+    push!(sol_percentil_99_inf , mean([lista[t] for lista in suma_solar_montecarlo])-(std([lista[t] for lista in suma_solar_montecarlo])*2.575))
     push!(sol_promedio , mean([lista[t] for lista in suma_solar_montecarlo]))
-    push!(tot_percentil_90_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.90))
-    push!(tot_percentil_90_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.10))
-    push!(tot_percentil_99_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.99))
-    push!(tot_percentil_99_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.01))
+    push!(tot_percentil_90_sup , mean([lista[t] for lista in suma_total_montecarlo])+(std([lista[t] for lista in suma_total_montecarlo])*1.645))
+    push!(tot_percentil_90_inf , mean([lista[t] for lista in suma_total_montecarlo])-(std([lista[t] for lista in suma_total_montecarlo])*1.645))
+    push!(tot_percentil_99_sup , mean([lista[t] for lista in suma_total_montecarlo])+(std([lista[t] for lista in suma_total_montecarlo])*2.575))
+    push!(tot_percentil_99_inf , mean([lista[t] for lista in suma_total_montecarlo])-(std([lista[t] for lista in suma_total_montecarlo])*2.575))
     push!(tot_promedio , mean([lista[t] for lista in suma_total_montecarlo]))
+    # push!(eol_percentil_90_sup, quantile([lista[t] for lista in suma_eolico_montecarlo], 0.90))
+    # push!(eol_percentil_90_inf,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.10))
+    # push!(eol_percentil_99_sup,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.99))
+    # push!(eol_percentil_99_inf ,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.01))
+    # push!(eol_promedio , mean([lista[t] for lista in suma_eolico_montecarlo]))
+    # push!(sol_percentil_90_sup, quantile([lista[t] for lista in suma_solar_montecarlo], 0.90))
+    # push!(sol_percentil_90_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.10))
+    # push!(sol_percentil_99_sup , quantile([lista[t] for lista in suma_solar_montecarlo], 0.99))
+    # push!(sol_percentil_99_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.01))
+    # push!(sol_promedio , mean([lista[t] for lista in suma_solar_montecarlo]))
+    # push!(tot_percentil_90_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.90))
+    # push!(tot_percentil_90_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.10))
+    # push!(tot_percentil_99_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.99))
+    # push!(tot_percentil_99_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.01))
+    # push!(tot_promedio , mean([lista[t] for lista in suma_total_montecarlo]))
 end
 
 # Iniciar el gráfico
@@ -112,8 +128,8 @@ for lista in suma_eolico_montecarlo
 end
 plot!(horas,eol_percentil_90_inf,label="percentil_90(inf)",lw=5,color=:blue)
 plot!(horas,eol_percentil_90_sup,label="percentil_90(sup)",lw=5,color=:blue)
-plot!(horas,eol_percentil_99_inf,label="percentil_90(inf)",lw=5,color=:green)
-plot!(horas,eol_percentil_99_sup,label="percentil_90(sup)",lw=5,color=:green)
+plot!(horas,eol_percentil_99_inf,label="percentil_99(inf)",lw=5,color=:green)
+plot!(horas,eol_percentil_99_sup,label="percentil_99(sup)",lw=5,color=:green)
 plot!(horas,eol_promedio,label="Media",lw=3,color=:red)
 display(plot!())
 #Solar
@@ -124,8 +140,8 @@ for lista in suma_solar_montecarlo
 end
 plot!(horas,sol_percentil_90_inf,label="percentil_90(inf)",lw=2,color=:blue)
 plot!(horas,sol_percentil_90_sup,label="percentil_90(sup)",lw=2,color=:blue)
-plot!(horas,sol_percentil_99_inf,label="percentil_90(inf)",lw=2,color=:green)
-plot!(horas,sol_percentil_99_sup,label="percentil_90(sup)",lw=2,color=:green)
+plot!(horas,sol_percentil_99_inf,label="percentil_99(inf)",lw=2,color=:green)
+plot!(horas,sol_percentil_99_sup,label="percentil_99(sup)",lw=2,color=:green)
 plot!(horas,sol_promedio,label="Media",lw=2,color=:red)
 display(plot!())
 plot()
@@ -135,7 +151,10 @@ for lista in suma_total_montecarlo
 end
 plot!(horas,tot_percentil_90_inf,label="percentil_90(inf)",lw=3,color=:blue)
 plot!(horas,tot_percentil_90_sup,label="percentil_90(sup)",lw=3,color=:blue)
-plot!(horas,tot_percentil_99_inf,label="percentil_90(inf)",lw=3,color=:green)
-plot!(horas,tot_percentil_99_sup,label="percentil_90(sup)",lw=3,color=:green)
+plot!(horas,tot_percentil_99_inf,label="percentil_99(inf)",lw=3,color=:green)
+plot!(horas,tot_percentil_99_sup,label="percentil_99(sup)",lw=3,color=:green)
 plot!(horas,tot_promedio,label="Media",lw=3,color=:red)
 display(plot!())
+reserva_90=tot_promedio.-tot_percentil_90_inf
+reserva_99=tot_promedio.-tot_percentil_99_inf
+
