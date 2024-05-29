@@ -81,6 +81,7 @@ lectura_ren_minup = Generadores["I56:I115"]
 lectura_ren_mindown = Generadores["J56:J115"]
 
 lectura_ren_generacion = Renovables["B3:Y62"]
+lectura_tipo_gen=Renovables["A3:A62"]
 
 lista_renovables = []
 
@@ -91,7 +92,14 @@ for i in eachindex(lectura_ren_bus)
     for j in 1:24
         push!(lista_generacion, lectura_ren_generacion[i,j])
     end
-    push!(lista_renovables, Renewables(lectura_ren_bus[i], lectura_ren_pmin[i], lectura_ren_pmax[i], lectura_ren_cvariable[i],
+    if occursin("Wind", lectura_tipo_gen[i])
+        variable="Wind"
+    elseif occursin("Solar", lectura_tipo_gen[i])
+        variable="Solar"
+    else
+        variable="Otra"
+    end
+    push!(lista_renovables, Renewables1(variable,lectura_ren_bus[i], lectura_ren_pmin[i], lectura_ren_pmax[i], lectura_ren_cvariable[i],
     lectura_ren_cfijo[i], lectura_ren_con[i], lectura_ren_ramp[i],lectura_ren_Sramp[i], lectura_ren_minup[i], lectura_ren_mindown[i], lista_generacion ))
 end
 
