@@ -77,6 +77,8 @@ function UnitCommitmentFunction(Data)
         for t in 1:T
             if Tipo_Generador[gen]=="Renovable"
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
+                #para que no este encendido si no genera
+                @constraint(model,Pg[gen,t]>=x[gen,t])
             end
         end
     end
