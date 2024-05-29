@@ -1,9 +1,8 @@
-<<<<<<< HEAD
+
 using Distributions, Plots, Random
 
-=======
 using Distributions, Plots, Random,Statistics
->>>>>>> cd2bde5c974ad878e94b8418bd792727f250b186
+
 include("lectura_datos118.jl")
 
 Random.seed!(69)
@@ -24,7 +23,7 @@ for i in 1:40
         dev_estandar_eolico[i, t] = lectura_ren_generacion[i, t] * κ_t_eolico_array[t]
     end
 end
-<<<<<<< HEAD
+
 
 for i in 1:20
     for t in 1:24
@@ -75,7 +74,7 @@ for escenario in 1:100
 end
 
 display(plot_solar)
-=======
+
 #creo sus largos
 eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
 solar_pronostico = lectura_ren_generacion[41:60, 1:24]
@@ -209,4 +208,3 @@ display(plot!())
 reserva_90=tot_promedio.-tot_percentil_90_inf
 reserva_99=tot_promedio.-tot_percentil_99_inf
 
->>>>>>> cd2bde5c974ad878e94b8418bd792727f250b186
