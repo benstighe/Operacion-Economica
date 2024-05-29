@@ -1,5 +1,5 @@
 ### Load packages ###
-using JuMP, XLSX, Statistics, Gurobi, DataFrames
+using JuMP, XLSX, Statistics, Gurobi, DataFrames, CSV
 include("lectura_datos118.jl")
 include("montecarlo.jl")
 ### Function for solving unit commitment ###
@@ -30,8 +30,13 @@ function UnitCommitmentFunction(Data)
     @constraint(model, LogicConstraint[i in GeneratorSet, t in 2:T], x[i,t] - x[i,t-1] == u[i,t] - v[i,t]) #Restricción binaria para el resto del tiempo.
 
     @constraint(model, PMinConstraint[i in GeneratorSet, t in 1:T], GeneratorPminInMW[i] * x[i,t] <= Pg[i,t]) # Pmin <= Pg
-    @constraint(model, PMaxConstraint[i in GeneratorSet, t in 1:T], Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
-
+    for i in GeneratorSet
+        for t in TimeSet
+            if Tipo_Generador[i]=="No renovable"
+            @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
+            end
+        end
+    end
     @constraint(model, FixAngleAtReferenceBusConstraint[i in 1:1, t in 1:T], Theta[i,t] == 0) # Angulo del bus de referencia
 
     @constraint(model, DCPowerFlowConstraint[i in BusSet, t in 1:T], 
@@ -107,7 +112,7 @@ function UnitCommitmentFunction(Data)
     # Optimizacion
     JuMP.optimize!(model)
 
-    return [model,x,u,v,Pg]
+    return [model,x,u,v,Pg,rup,rdown]
 end
 
 ### Unit commitment example ###
@@ -145,11 +150,9 @@ GeneratorVariableCostInUSDperMWh,GeneratorVariableCostInUSDperMWh,LineFromBus,Li
 LineReactance,LineMaxFlow,Tipo_Generador,Generacion_renovable]
 
 Results = UnitCommitmentFunction(Data)
-model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5];
+model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5] ;rup = Results[6] ;rdown = Results[7] ;
 
 println("Total cost: ", JuMP.objective_value(model))
-
-
 
 # for i in GeneratorSet
 #     for t in TimeSet
@@ -171,7 +174,7 @@ costo_variable = sum(value(Pg[i, t]) * GeneratorVariableCostInUSDperMWh[i] for i
 println("Costo de encedido total: ", costo_startup)
 println("Costo fijo total: ", costo_fijo)
 println("Costo variable de generación total: ", costo_variable)
-
+println("--------------Reservas-------------")
 for t in 1:24
     println("INSTANTE ",t)
     println("Reserva 90  ",reserva_90[t])
@@ -183,12 +186,20 @@ for t in 1:24
     println("Limite inferior 99 ",tot_percentil_99_inf[t])
     println("Cantidad max generadores ",sum(GeneratorPmaxInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
     println("Cantidad min generadores ",sum(GeneratorPminInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
-    println("Suma reserva up ", sum(value(rup[k,t]) for k in GeneratorSet))
-    println("Suma reserva down ", sum(value(rdown[k,t]) for k in GeneratorSet))
+    println("Suma reserva up ", sum(value(rup[k, t]) for k in GeneratorSet))
+    println("Suma reserva down ", sum(value(rdown[k, t]) for k in GeneratorSet))
 end
-
-
-
+println("--------------Generadores-------------")
+for t in 1:24
+    println("INSTANTE: ",t)
+    println("Cantidad generadores no renovables prendidos ",sum(value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables prendidos ",sum(value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+    println("Cantidad generadores no renovables comenzando a encender ",sum(value(u[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables comenzando a encender",sum(value(u[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+    println("Cantidad generadores no renovables apagando ",sum(value(v[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables apagando",sum(value(v[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+end
+#ACA SE LLENA EL EXCEL
 costos_df = DataFrame(Variable=["Costo Total", "Costo de Encendido Total", "Costo Fijo Total", "Costo Variable Total"],
                       Valor=[JuMP.objective_value(model), costo_startup, costo_fijo, costo_variable])
 
@@ -225,3 +236,22 @@ XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
     XLSX.addsheet!(xf, "Costos")
     XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
 end
+#LLENAMOS CSV para la otra pregunta
+data_x = DataFrame(i=Int[], t=Int[], x=Int[])
+data_u = DataFrame(i=Int[], t=Int[], u=Int[])
+data_v = DataFrame(i=Int[], t=Int[], v=Int[])
+
+for i in GeneratorSet
+    for t in TimeSet
+        push!(data_x, (i, t, value(x[i,t])))
+        push!(data_u, (i, t, value(u[i,t])))
+        push!(data_v, (i, t, value(v[i,t])))
+    end
+end
+
+# Guardar los DataFrames en archivos CSV
+CSV.write("x_values.csv", data_x)
+CSV.write("u_values.csv", data_u)
+CSV.write("v_values.csv", data_v)
+
+println("Valores de las variables binarias guardados en archivos CSV.")

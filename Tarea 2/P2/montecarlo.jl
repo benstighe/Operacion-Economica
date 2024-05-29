@@ -56,7 +56,7 @@ for escenario in 1:100
         end
     end
 end
-#PARA GRAFICAR LOS 100*24 casos
+#-----------------------PARA GRAFICAR LOS 100*24 casos------------------
 
 # # Graficar los 100 escenarios de generación eólica
 # plot_eolico = plot(title="Escenarios de generación eólica", xlabel="Hora", ylabel="Generación", label=nothing)
@@ -75,6 +75,7 @@ end
 # end
 
 # display(plot_solar)
+#--------------------------------FIN graficar---------------------------
 
 #creo sus largos
 eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
@@ -209,3 +210,19 @@ display(plot!())
 reserva_90=tot_promedio.-tot_percentil_90_inf
 reserva_99=tot_promedio.-tot_percentil_99_inf
 
+
+for iter in 1:100
+    lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
+    println(length(lista_datos_eolico))
+    lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
+    println(length(lista_datos_solar))
+    global prod_gen1 = [[] for gen in gen_list]
+    println(length(prod_gen1))
+    for ren in lista_datos_eolico
+        push!(prod_gen1, ren)
+    end
+    for ren in lista_datos_solar
+        push!(prod_gen1, ren)
+    end
+    println(length(prod_gen1))
+end
