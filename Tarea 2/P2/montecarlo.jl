@@ -56,24 +56,25 @@ for escenario in 1:100
         end
     end
 end
+#PARA GRAFICAR LOS 100*24 casos
 
-# Graficar los 100 escenarios de generación eólica
-plot_eolico = plot(title="Escenarios de generación eólica", xlabel="Hora", ylabel="Generación", label=nothing)
+# # Graficar los 100 escenarios de generación eólica
+# plot_eolico = plot(title="Escenarios de generación eólica", xlabel="Hora", ylabel="Generación", label=nothing)
 
-for escenario in 1:100
-    plot!(1:24, eolico_pronostico_escenarios[:, :, escenario]', alpha=0.3, label=nothing)
-end
+# for escenario in 1:100
+#     plot!(1:24, eolico_pronostico_escenarios[:, :, escenario]', alpha=0.3, label=nothing)
+# end
 
-display(plot_eolico)
+# display(plot_eolico)
 
-# Graficar los 100 escenarios de generación solar
-plot_solar = plot(title="Escenarios de generación solar", xlabel="Hora", ylabel="Generación", label=nothing)
+# # Graficar los 100 escenarios de generación solar
+# plot_solar = plot(title="Escenarios de generación solar", xlabel="Hora", ylabel="Generación", label=nothing)
 
-for escenario in 1:100
-    plot!(1:24, solar_pronostico_escenarios[:, 1:24, escenario]', alpha=0.3, label=nothing)
-end
+# for escenario in 1:100
+#     plot!(1:24, solar_pronostico_escenarios[:, 1:24, escenario]', alpha=0.3, label=nothing)
+# end
 
-display(plot_solar)
+# display(plot_solar)
 
 #creo sus largos
 eolico_pronostico = lectura_ren_generacion[1:40, 1:24]

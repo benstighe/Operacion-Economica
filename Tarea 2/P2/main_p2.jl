@@ -13,11 +13,14 @@ function UnitCommitmentFunction(Data)
 
     model = Model(Gurobi.Optimizer)
     set_optimizer_attribute(model, "MIPGap", 0.001)
+
     @variable(model, x[GeneratorSet,TimeSet], Bin) #x es el estado del generador (encendido o apagado) (ON/OFF)
     @variable(model, u[GeneratorSet,TimeSet], Bin) #u es si se enciende el generador. u = 1: Se enciende i en el tiempo t, u = 0: No se enciende i en t.
     @variable(model, v[GeneratorSet,TimeSet], Bin) #v es si se apaga el generador.  v = 1: Se apaga i en el tiempo t, v = 0: No se apaga i en t.
     @variable(model, Pg[GeneratorSet,TimeSet]) #Pg : Cantidad de energía generada en MWh
     @variable(model, Theta[BusSet,TimeSet]) # Theta es el defase (angulo)
+    @variable(model, rup[GeneratorSet,TimeSet])
+    @variable(model, rdown[GeneratorSet,TimeSet])
 
     @objective(model, Min,  sum(GeneratorFixedCostInUSDperHour[i] * x[i,t]
                             + GeneratorStartUpCostInUSD[i] * u[i,t]
@@ -79,18 +82,26 @@ function UnitCommitmentFunction(Data)
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
                 #para que no este encendido si no genera
                 @constraint(model,Pg[gen,t]>=x[gen,t])
+            elseif Tipo_Generador[gen]=="No renovable"
+                #renovable reserva para arriba
+                @constraint(model,Pg[gen,t]+rup[gen,t]<=GeneratorPmaxInMW[gen]*x[gen,t])
+                @constraint(model,Pg[gen,t]-rdown[gen,t]>=GeneratorPminInMW[gen]*x[gen,t])
             end
         end
     end
-    #esto es el caso si renovables generan menos de lo esperado
-    @constraint(model, RES[t in 1:T], 
-        sum(GeneratorPmaxInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
-        +tot_percentil_99_inf[t]>= sum(Pd[i][t] for i in BusSet))
+    @constraint(model,reservaup[t in 1:T],sum(rup[gen,t] for gen in GeneratorSet)>=reserva_99[t])
+    @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_99[t])
+
+    #ESTO ES LO PENSADO POR NOSOTROS
+    # #esto es el caso si renovables generan menos de lo esperado
+    # @constraint(model, RES[t in 1:T], 
+    #     sum(GeneratorPmaxInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
+    #     +tot_percentil_99_inf[t]>= sum(Pd[i][t] for i in BusSet))
     
-        #Si renovables generan mas de lo esperado
-    @constraint(model, RES1[ t in 1:T], 
-        sum(GeneratorPminInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
-        +tot_percentil_99_sup[t] <= sum(Pd[i][t] for i in BusSet))
+    #     #Si renovables generan mas de lo esperado
+    # @constraint(model, RES1[ t in 1:T], 
+    #     sum(GeneratorPminInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
+    #     +tot_percentil_99_sup[t] <= sum(Pd[i][t] for i in BusSet))
 
 
     # Optimizacion
@@ -163,11 +174,17 @@ println("Costo variable de generación total: ", costo_variable)
 
 for t in 1:24
     println("INSTANTE ",t)
-    println("Cantidad demanda ",t," ",sum(Pd[i][t] for i in BusSet))
-    println("Limite inferior ",tot_percentil_99_inf[t])
+    println("Reserva 90  ",reserva_90[t])
+    println("Reserva 99  ",reserva_99[t])
+    println("Cantidad demanda ",sum(Pd[i][t] for i in BusSet))
+    println("Limite inferior 90 ",tot_percentil_90_inf[t])
+    println("Limite inferior 99 ",tot_percentil_99_inf[t])
+    println("Limite sup 90 ",tot_percentil_90_sup[t])
+    println("Limite inferior 99 ",tot_percentil_99_inf[t])
     println("Cantidad max generadores ",sum(GeneratorPmaxInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
-    println("Limite sup ",tot_percentil_99_sup[t])
     println("Cantidad min generadores ",sum(GeneratorPminInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Suma reserva up ", sum(value(rup[k,t]) for k in GeneratorSet))
+    println("Suma reserva down ", sum(value(rdown[k,t]) for k in GeneratorSet))
 end
 
 
