@@ -27,7 +27,7 @@ end
 
 for i in 1:20
     for t in 1:24
-        dev_estandar_solar[i, t] = lectura_ren_generacion[i, t] * κ_t_solar_array[t]
+        dev_estandar_solar[i, t] = lectura_ren_generacion[i+40, t] * κ_t_solar_array[t]
     end
 end
 
