@@ -82,12 +82,13 @@ function UnitCommitmentFunction(Data)
     end
     #esto es el caso si renovables generan menos de lo esperado
     @constraint(model, RES[t in 1:T], 
-        sum(GeneratorPmaxInMW[k]*x[k,t] for k in GeneratorSet)
-        >= sum(Pd[i][t] for i in BusSet) + reserva_99[t])
-    #Si renovables generan mas de lo esperado
+        sum(GeneratorPmaxInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
+        +tot_percentil_99_inf[t]>= sum(Pd[i][t] for i in BusSet))
+    
+        #Si renovables generan mas de lo esperado
     @constraint(model, RES1[ t in 1:T], 
-        sum(GeneratorPminInMW[k]*x[k,t] for k in GeneratorSet)
-        <= sum(Pd[i][t] for i in BusSet) - reserva_99[t])
+        sum(GeneratorPminInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
+        +tot_percentil_99_sup[t] <= sum(Pd[i][t] for i in BusSet))
 
 
     # Optimizacion
@@ -157,6 +158,17 @@ costo_variable = sum(value(Pg[i, t]) * GeneratorVariableCostInUSDperMWh[i] for i
 println("Costo de encedido total: ", costo_startup)
 println("Costo fijo total: ", costo_fijo)
 println("Costo variable de generación total: ", costo_variable)
+
+for t in 1:24
+    println("INSTANTE ",t)
+    println("Cantidad demanda ",t," ",sum(Pd[i][t] for i in BusSet))
+    println("Limite inferior ",tot_percentil_99_inf[t])
+    println("Cantidad max generadores ",sum(GeneratorPmaxInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Limite sup ",tot_percentil_99_sup[t])
+    println("Cantidad min generadores ",sum(GeneratorPminInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+end
+
+
 
 costos_df = DataFrame(Variable=["Costo Total", "Costo de Encendido Total", "Costo Fijo Total", "Costo Variable Total"],
                       Valor=[JuMP.objective_value(model), costo_startup, costo_fijo, costo_variable])
