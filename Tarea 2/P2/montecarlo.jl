@@ -1,4 +1,9 @@
+<<<<<<< HEAD
+using Distributions, Plots, Random
+
+=======
 using Distributions, Plots, Random,Statistics
+>>>>>>> cd2bde5c974ad878e94b8418bd792727f250b186
 include("lectura_datos118.jl")
 
 Random.seed!(69)
@@ -13,18 +18,64 @@ Random.seed!(69)
 
 dev_estandar_eolico = lectura_ren_generacion[1:40, 1:24]
 dev_estandar_solar = lectura_ren_generacion[41:60, 1:24]
-#eolico
-for i in 1:40 
+
+for i in 1:40
     for t in 1:24
-        dev_estandar_eolico[i,t] = lectura_ren_generacion[i,t]*κ_t_eolico_array[t]
+        dev_estandar_eolico[i, t] = lectura_ren_generacion[i, t] * κ_t_eolico_array[t]
     end
 end
-#solar
-for i in 1:20 
+<<<<<<< HEAD
+
+for i in 1:20
     for t in 1:24
-        dev_estandar_solar[i,t] = lectura_ren_generacion[i,t]*κ_t_solar_array[t]
+        dev_estandar_solar[i, t] = lectura_ren_generacion[i, t] * κ_t_solar_array[t]
     end
 end
+
+# Inicializar matrices para almacenar los escenarios
+eolico_pronostico_escenarios = zeros(40, 24, 100)
+solar_pronostico_escenarios = zeros(20, 24, 100)
+
+# Generar 100 escenarios para eólica
+for escenario in 1:100
+    for j in 1:40
+        for t in 1:24
+            dist = Normal(0, dev_estandar_eolico[j, t])
+            epsilon = rand(dist, 1)[1]
+            eolico_pronostico_escenarios[j, t, escenario] = max(0.0, lectura_ren_generacion[j, t] + epsilon)
+        end
+    end
+end
+
+# Generar 100 escenarios para solar
+for escenario in 1:100
+    for j in 1:20
+        for t in 6:19
+            dist = Normal(0, dev_estandar_solar[j, t])
+            epsilon = rand(dist, 1)[1]
+            solar_pronostico_escenarios[j, t, escenario] = max(0.0, lectura_ren_generacion[j + 40, t] + epsilon)
+        end
+    end
+end
+
+# Graficar los 100 escenarios de generación eólica
+plot_eolico = plot(title="Escenarios de generación eólica", xlabel="Hora", ylabel="Generación", label=nothing)
+
+for escenario in 1:100
+    plot!(1:24, eolico_pronostico_escenarios[:, :, escenario]', alpha=0.3, label=nothing)
+end
+
+display(plot_eolico)
+
+# Graficar los 100 escenarios de generación solar
+plot_solar = plot(title="Escenarios de generación solar", xlabel="Hora", ylabel="Generación", label=nothing)
+
+for escenario in 1:100
+    plot!(1:24, solar_pronostico_escenarios[:, 1:24, escenario]', alpha=0.3, label=nothing)
+end
+
+display(plot_solar)
+=======
 #creo sus largos
 eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
 solar_pronostico = lectura_ren_generacion[41:60, 1:24]
@@ -158,3 +209,4 @@ display(plot!())
 reserva_90=tot_promedio.-tot_percentil_90_inf
 reserva_99=tot_promedio.-tot_percentil_99_inf
 
+>>>>>>> cd2bde5c974ad878e94b8418bd792727f250b186
