@@ -158,8 +158,8 @@ println("Costo variable de generación total: ", costo_variable)
 println("--------------Reservas-------------")
 for t in 1:24
     println("INSTANTE ",t)
-    println("Reserva 90  ",reserva_90[t])
-    println("Reserva 99  ",reserva_99[t])
+    println("Reserva 90  ",reserva_90_of[t])
+    println("Reserva 99  ",reserva_99_of[t])
     println("Cantidad demanda ",sum(Pd[i][t] for i in BusSet))
     println("Limite inferior 90 ",tot_percentil_90_inf[t])
     println("Limite inferior 99 ",tot_percentil_99_inf[t])
@@ -218,21 +218,21 @@ XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
     XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
 end
 #LLENAMOS CSV para la otra pregunta
-data_x = DataFrame(i=Int[], t=Int[], x=Int[])
-data_u = DataFrame(i=Int[], t=Int[], u=Int[])
-data_v = DataFrame(i=Int[], t=Int[], v=Int[])
+data_x1 = DataFrame(i=Int[], t=Int[], x=Int[])
+data_u1 = DataFrame(i=Int[], t=Int[], u=Int[])
+data_v1 = DataFrame(i=Int[], t=Int[], v=Int[])
 
 for i in GeneratorSet
     for t in TimeSet
-        push!(data_x, (i, t, value(x[i,t])))
-        push!(data_u, (i, t, value(u[i,t])))
-        push!(data_v, (i, t, value(v[i,t])))
+        push!(data_x1, (i, t, value(x[i,t])))
+        push!(data_u1, (i, t, value(u[i,t])))
+        push!(data_v1, (i, t, value(v[i,t])))
     end
 end
 
 # Guardar los DataFrames en archivos CSV
-CSV.write("x_values_99.csv", data_x)
-CSV.write("u_values_99.csv", data_u)
-CSV.write("v_values_99.csv", data_v)
+CSV.write("x_values_99.csv", data_x1)
+CSV.write("u_values_99.csv", data_u1)
+CSV.write("v_values_99.csv", data_v1)
 
 println("Valores de las variables binarias guardados en archivos CSV.")

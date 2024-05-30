@@ -71,8 +71,8 @@ function UnitCommitmentFunction1(Data,x,u,v)
         GeneratorStartUpShutDownRampInMW[i]*u[(i, t)])#se pone t-1 ya que si se pone t cuando se prende se sumarian las dos ramplas
 
     # transmission line limits
-    @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
-        Theta[LineToBus[i],t]) <= LineMaxFlow[i])
+    # @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
+    #     Theta[LineToBus[i],t]) <= LineMaxFlow[i])
 
     #Generador renovables
     for gen in 1:length(GeneratorSet)

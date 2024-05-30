@@ -181,7 +181,7 @@ for t in 1:24
         global varianza_tot=varianza_tot+(dev_estandar_solar[i, t]^2)
         global media= media + lectura_ren_generacion[i+40,t]
     end
-    desv_total=varianza_tot^(0.5)
+    global desv_total=varianza_tot^(0.5)
     push!(tot_promedio,media)
     push!(tot_percentil_90_sup,media+(desv_total*1.645))
     push!(tot_percentil_90_inf,media-(desv_total*1.645))
