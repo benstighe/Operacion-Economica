@@ -1,6 +1,6 @@
 ### Load packages ###
 using JuMP, XLSX, Statistics, Gurobi, DataFrames
-include("lectura_datos_118_p1.jl")
+include("lectura_datos.jl")
 
 ### Function for solving unit commitment ###
 function UnitCommitmentFunction(Data)
@@ -27,7 +27,13 @@ function UnitCommitmentFunction(Data)
     @constraint(model, LogicConstraint[i in GeneratorSet, t in 2:T], x[i,t] - x[i,t-1] == u[i,t] - v[i,t]) #Restricción binaria para el resto del tiempo.
 
     @constraint(model, PMinConstraint[i in GeneratorSet, t in 1:T], GeneratorPminInMW[i] * x[i,t] <= Pg[i,t]) # Pmin <= Pg
-    @constraint(model, PMaxConstraint[i in GeneratorSet, t in 1:T], Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
+    for i in GeneratorSet
+        for t in TimeSet
+            if Tipo_Generador[i]=="No renovable"
+            @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
+            end
+        end
+    end
 
     @constraint(model, FixAngleAtReferenceBusConstraint[i in 1:1, t in 1:T], Theta[i,t] == 0) # Angulo del bus de referencia
 
@@ -38,7 +44,7 @@ function UnitCommitmentFunction(Data)
         + sum( (1/LineReactance[l]) * (Theta[LineToBus[l],t] - Theta[LineFromBus[l],t]) for l in LineSet if LineToBus[l] == i))
 
 
-    #Min Up/Down:/(segun yo estas estan malas)
+    #Min Up/Down:
     @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[i,k] 
     for k in t:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[i,t])
     
@@ -46,7 +52,7 @@ function UnitCommitmentFunction(Data)
     for k in t:T) >= 0)    
     
 
-    #Min Up/Down:(segun yo estas estan malas)
+    #Min Up/Down:
     @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[i,k] 
     for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[i,t])
 
