@@ -89,7 +89,6 @@ suma_solar_montecarlo=[]
 suma_total_montecarlo=[]
 #Relleno estas lista_renovables
 for semilla in 1:100
-    Random.seed!(semilla)
     #eolico
     global eolico_pronostico = zeros(40,24)
     semilla_eolico_suma=[]

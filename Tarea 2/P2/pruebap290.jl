@@ -1,4 +1,3 @@
-### Load packages ###
 using JuMP, XLSX, Statistics, Gurobi, DataFrames, CSV
 include("lectura_datos118.jl")
 include("montecarlo.jl")
@@ -12,15 +11,15 @@ function UnitCommitmentFunction(Data)
     T = length(TimeSet)
 
     model = Model(Gurobi.Optimizer)
-    set_optimizer_attribute(model, "MIPGap", 0.005)
+    set_optimizer_attribute(model, "MIPGap", 0.001)
 
     @variable(model, x[GeneratorSet,TimeSet], Bin) #x es el estado del generador (encendido o apagado) (ON/OFF)
     @variable(model, u[GeneratorSet,TimeSet], Bin) #u es si se enciende el generador. u = 1: Se enciende i en el tiempo t, u = 0: No se enciende i en t.
     @variable(model, v[GeneratorSet,TimeSet], Bin) #v es si se apaga el generador.  v = 1: Se apaga i en el tiempo t, v = 0: No se apaga i en t.
     @variable(model, Pg[GeneratorSet,TimeSet]) #Pg : Cantidad de energía generada en MWh
     @variable(model, Theta[BusSet,TimeSet]) # Theta es el defase (angulo)
-    @variable(model, r[GeneratorSet,TimeSet])
-    #@variable(model, rdown[GeneratorSet,TimeSet])
+    # @variable(model, rup[GeneratorSet,TimeSet])
+    # @variable(model, rdown[GeneratorSet,TimeSet])
 
     @objective(model, Min,  sum(GeneratorFixedCostInUSDperHour[i] * x[i,t]
                             + GeneratorStartUpCostInUSD[i] * u[i,t]
@@ -78,22 +77,26 @@ function UnitCommitmentFunction(Data)
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
                 #para que no este encendido si no genera
                 @constraint(model,Pg[gen,t]>=x[gen,t])
-                @constraint(model,r[gen,t]==0)
+                # @constraint(model,rup[gen,t]==0)
                 # @constraint(model,rdown[gen,t]==0)
-            elseif Tipo_Generador[gen]=="No renovable"
-                #renovable reserva para arriba
-                @constraint(model,Pg[gen,t]+r[gen,t]<=GeneratorPmaxInMW[gen]*x[gen,t])
-                @constraint(model,Pg[gen,t]-r[gen,t]>=GeneratorPminInMW[gen]*x[gen,t])
+            # elseif Tipo_Generador[gen]=="No renovable"
+            #     #renovable reserva para arriba
+            #     @constraint(model,Pg[gen,t]+rup[gen,t]<=GeneratorPmaxInMW[gen]*x[gen,t])
+            #     @constraint(model,Pg[gen,t]-rdown[gen,t]>=GeneratorPminInMW[gen]*x[gen,t])
             end
         end
     end
-    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_99_of[t])
-    # @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_99_of[t])
+    # @constraint(model,reservaup[t in 1:T],sum(rup[gen,t] for gen in GeneratorSet)==reserva_90_of[t])
+    # @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)==reserva_90_of[t])
+    @constraint(model,ReservaArriba[t in 1:T],sum(GeneratorPmaxInMW[i]*x[i,t] for i in GeneratorSet if Tipo_Generador[i]=="No renovable")
+                                                + tot_percentil_90_inf[t]>=sum(Pd[i][t] for i in BusSet))
 
+    @constraint(model,ReservaAbajo[t in 1:T],sum(GeneratorPminInMW[i]*x[i,t] for i in GeneratorSet if Tipo_Generador[i]=="No renovable")
+                                                + tot_percentil_90_sup[t]<=sum(Pd[i][t] for i in BusSet))
     # Optimizacion
     JuMP.optimize!(model)
 
-    return [model,x,u,v,Pg,r]#,rdown]
+    return [model,x,u,v,Pg]
 end
 
 ### Unit commitment example ###
@@ -131,7 +134,7 @@ GeneratorVariableCostInUSDperMWh,GeneratorVariableCostInUSDperMWh,LineFromBus,Li
 LineReactance,LineMaxFlow,Tipo_Generador,Generacion_renovable]
 
 Results = UnitCommitmentFunction(Data)
-model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5] ;r = Results[6] ;#rdown = Results[7] ;
+model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5] ;#rup = Results[6] ;rdown = Results[7] ;
 
 println("Total cost: ", JuMP.objective_value(model))
 
@@ -167,8 +170,8 @@ for t in 1:24
     println("Limite inferior 99 ",tot_percentil_99_inf[t])
     println("Cantidad max generadores ",sum(GeneratorPmaxInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
     println("Cantidad min generadores ",sum(GeneratorPminInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
-    println("Suma reserva up ", sum(value(r[k, t]) for k in GeneratorSet))
-    #println("Suma reserva down ", sum(value(rdown[k, t]) for k in GeneratorSet))
+    # println("Suma reserva up ", sum(value(rup[k, t]) for k in GeneratorSet))
+    # println("Suma reserva down ", sum(value(rdown[k, t]) for k in GeneratorSet))
 end
 println("--------------Generadores-------------")
 for t in 1:24
@@ -218,21 +221,21 @@ XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
     XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
 end
 #LLENAMOS CSV para la otra pregunta
-data_x1 = DataFrame(i=Int[], t=Int[], x=Int[])
-data_u1 = DataFrame(i=Int[], t=Int[], u=Int[])
-data_v1 = DataFrame(i=Int[], t=Int[], v=Int[])
+data_x = DataFrame(i=Int[], t=Int[], x=Int[])
+data_u = DataFrame(i=Int[], t=Int[], u=Int[])
+data_v = DataFrame(i=Int[], t=Int[], v=Int[])
 
 for i in GeneratorSet
     for t in TimeSet
-        push!(data_x1, (i, t, value(x[i,t])))
-        push!(data_u1, (i, t, value(u[i,t])))
-        push!(data_v1, (i, t, value(v[i,t])))
+        push!(data_x, (i, t, value(x[i,t])))
+        push!(data_u, (i, t, value(u[i,t])))
+        push!(data_v, (i, t, value(v[i,t])))
     end
 end
 
 # Guardar los DataFrames en archivos CSV
-CSV.write("x_values_99.csv", data_x1)
-CSV.write("u_values_99.csv", data_u1)
-CSV.write("v_values_99.csv", data_v1)
+CSV.write("x_values_90_p.csv", data_x)
+CSV.write("u_values_90_p.csv", data_u)
+CSV.write("v_values_90_p.csv", data_v)
 
 println("Valores de las variables binarias guardados en archivos CSV.")

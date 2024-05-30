@@ -2,9 +2,9 @@ using JuMP, XLSX, Statistics, Gurobi, DataFrames, CSV
 include("lectura_datos118.jl")
 include("montecarlo.jl")
 # Leer los archivos CSV
-data_x = CSV.read("x_values_99.csv", DataFrame)
-data_u = CSV.read("u_values_99.csv", DataFrame)
-data_v = CSV.read("v_values_99.csv", DataFrame)
+data_x = CSV.read("x_values_90.csv", DataFrame)
+data_u = CSV.read("u_values_90.csv", DataFrame)
+data_v = CSV.read("v_values_90.csv", DataFrame)
 
 x_values = Dict((row.i, row.t) => row.x for row in eachrow(data_x))
 u_values = Dict((row.i, row.t) => row.u for row in eachrow(data_u))
@@ -49,19 +49,19 @@ function UnitCommitmentFunction1(Data,x,u,v)
         + sum( (1/LineReactance[l]) * (Theta[LineToBus[l],t] - Theta[LineFromBus[l],t]) for l in LineSet if LineToBus[l] == i))
 
 
-    #Min Up/Down:
-    @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[(i, t)] 
-    for k in t:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[(i, t)])
+    # #Min Up/Down:
+    # @constraint(model, MinEncendido[i in GeneratorSet, t in 1:T-GeneratorMinimumUpTimeInHours[i]], sum(x[(i, t)] 
+    # for k in t:(t+GeneratorMinimumUpTimeInHours[i]-1)) >= GeneratorMinimumUpTimeInHours[i]*u[(i, t)])
     
-    @constraint(model, MinEncendido2[i in GeneratorSet, t in T-GeneratorMinimumUpTimeInHours[i]+1:T], sum(x[(i, t)] - u[(i, t)] 
-    for k in t:T) >= 0)    
+    # @constraint(model, MinEncendido2[i in GeneratorSet, t in T-GeneratorMinimumUpTimeInHours[i]+1:T], sum(x[(i, t)] - u[(i, t)] 
+    # for k in t:T) >= 0)    
     
-    #Min Up/Down:
-    @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[(i, t)] 
-    for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[(i, t)])
+    # #Min Up/Down:
+    # @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[(i, t)] 
+    # for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[(i, t)])
 
-    @constraint(model, MinApagado2[i in GeneratorSet, t in T-GeneratorMinimumDownTimeInHours[i]+1:T], sum(1 - x[(i, t)] - v[(i, t)]
-    for k in t:T) >= 0)
+    # @constraint(model, MinApagado2[i in GeneratorSet, t in T-GeneratorMinimumDownTimeInHours[i]+1:T], sum(1 - x[(i, t)] - v[(i, t)]
+    # for k in t:T) >= 0)
 
     #Ramp Down 
     @constraint(model, RampasDown[i in GeneratorSet, t in 2:T], -GeneratorRampInMW[i]*x[(i, t)]
@@ -70,7 +70,7 @@ function UnitCommitmentFunction1(Data,x,u,v)
     @constraint(model, RampasUp[i in GeneratorSet, t in 2:T], Pg[i,t] - Pg[i,t-1] <= GeneratorRampInMW[i]*x[(i, t-1)] + 
         GeneratorStartUpShutDownRampInMW[i]*u[(i, t)])#se pone t-1 ya que si se pone t cuando se prende se sumarian las dos ramplas
 
-    # transmission line limits
+    # # transmission line limits
     # @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
     #     Theta[LineToBus[i],t]) <= LineMaxFlow[i])
 
@@ -80,7 +80,7 @@ function UnitCommitmentFunction1(Data,x,u,v)
             if Tipo_Generador[gen]=="Renovable"
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[(gen, t)])
                 #para que no este encendido si no genera
-                @constraint(model,Pg[gen,t]>=x[(gen, t)])
+                #@constraint(model,Pg[gen,t]>=x[(gen, t)])
 
             # elseif Tipo_Generador[gen]=="No renovable"
             #     #renovable reserva para arriba
@@ -131,14 +131,14 @@ infactibles = 0
 for iter in 1:100
     global lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
     global lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
-    global prod_gen = [[] for gen in gen_list]
+    global prod_gen1 = [[] for gen in gen_list]
     for ren in lista_datos_eolico
-        push!(prod_gen, ren)
+        push!(prod_gen1, ren)
     end
     for ren in lista_datos_solar
-        push!(prod_gen, ren)
+        push!(prod_gen1, ren)
     end
-    global Generacion_renovable=prod_gen
+    global Generacion_renovable=prod_gen1
     global Data = [BusSet,TimeSet,GeneratorSet,LineSet,Pd,GeneratorBusLocation,GeneratorPminInMW,
             GeneratorPmaxInMW,GeneratorRampInMW,GeneratorStartUpShutDownRampInMW,GeneratorMinimumUpTimeInHours,
             GeneratorMinimumDownTimeInHours,GeneratorStartUpCostInUSD,GeneratorFixedCostInUSDperHour,
