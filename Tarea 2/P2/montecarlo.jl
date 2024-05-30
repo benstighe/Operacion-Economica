@@ -78,8 +78,8 @@ end
 #--------------------------------FIN graficar---------------------------
 
 #creo sus largos
-eolico_pronostico = lectura_ren_generacion[1:40, 1:24]
-solar_pronostico = lectura_ren_generacion[41:60, 1:24]
+eolico_pronostico = zeros(40,24)
+solar_pronostico = zeros(20,24)
 #para obtener cada uno de los pronosticos, cada elemento es uno de los 100
 eolico_montecarlo=[]
 solar_montecarlo=[]
@@ -91,6 +91,7 @@ suma_total_montecarlo=[]
 for semilla in 1:100
     Random.seed!(semilla)
     #eolico
+    global eolico_pronostico = zeros(40,24)
     semilla_eolico_suma=[]
     for t in 1:24
         suma_eolico=0
@@ -102,10 +103,11 @@ for semilla in 1:100
         end 
         push!(semilla_eolico_suma, suma_eolico)
     end 
-    push!(eolico_montecarlo, eolico_pronostico)
-    push!(suma_eolico_montecarlo, semilla_eolico_suma)
+    push!(eolico_montecarlo, deepcopy(eolico_pronostico))
+    push!(suma_eolico_montecarlo, deepcopy(semilla_eolico_suma))
     #solar
     semilla_solar_suma=[]
+    global solar_pronostico = zeros(20,24)
     for t in 1:24
         suma_solar=0
         for j in 1:20
@@ -116,10 +118,10 @@ for semilla in 1:100
         end 
         push!(semilla_solar_suma, suma_solar)
     end 
-    suma_total=semilla_solar_suma.+semilla_eolico_suma
-    push!(solar_montecarlo, solar_pronostico)
-    push!(suma_solar_montecarlo, semilla_solar_suma)
-    push!(suma_total_montecarlo, suma_total)
+    suma_total=deepcopy(semilla_solar_suma) .+ deepcopy(semilla_eolico_suma)
+    push!(solar_montecarlo, deepcopy(solar_pronostico))
+    push!(suma_solar_montecarlo, deepcopy(semilla_solar_suma))
+    push!(suma_total_montecarlo, deepcopy(suma_total))
 end
 #Obtengo los percentiles de cada una
 eol_percentil_90_sup=[]
@@ -213,16 +215,16 @@ reserva_99=tot_promedio.-tot_percentil_99_inf
 
 for iter in 1:100
     lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
-    println(length(lista_datos_eolico))
+    
     lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
-    println(length(lista_datos_solar))
+   
     global prod_gen1 = [[] for gen in gen_list]
-    println(length(prod_gen1))
+   
     for ren in lista_datos_eolico
         push!(prod_gen1, ren)
     end
     for ren in lista_datos_solar
         push!(prod_gen1, ren)
     end
-    println(length(prod_gen1))
+
 end

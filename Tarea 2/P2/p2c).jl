@@ -2,9 +2,9 @@ using JuMP, XLSX, Statistics, Gurobi, DataFrames, CSV
 include("lectura_datos118.jl")
 include("montecarlo.jl")
 # Leer los archivos CSV
-data_x = CSV.read("x_values.csv", DataFrame)
-data_u = CSV.read("u_values.csv", DataFrame)
-data_v = CSV.read("v_values.csv", DataFrame)
+data_x = CSV.read("x_values_90.csv", DataFrame)
+data_u = CSV.read("u_values_90.csv", DataFrame)
+data_v = CSV.read("v_values_90.csv", DataFrame)
 
 x_values = Dict((row.i, row.t) => row.x for row in eachrow(data_x))
 u_values = Dict((row.i, row.t) => row.u for row in eachrow(data_u))
@@ -35,7 +35,7 @@ function UnitCommitmentFunction1(Data,x,u,v)
     for i in GeneratorSet
         for t in TimeSet
             if Tipo_Generador[i]=="No renovable"
-            @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[(i,t)]) # Pmax >= Pg
+                @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[(i,t)]) # Pmax >= Pg
             end
         end
     end
@@ -129,9 +129,9 @@ factibles = 0
 infactibles = 0
 
 for iter in 1:100
-    lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
-    lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
-    local prod_gen = [[] for gen in gen_list]
+    global lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
+    global lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
+    global prod_gen = [[] for gen in gen_list]
     for ren in lista_datos_eolico
         push!(prod_gen, ren)
     end
@@ -144,8 +144,8 @@ for iter in 1:100
             GeneratorMinimumDownTimeInHours,GeneratorStartUpCostInUSD,GeneratorFixedCostInUSDperHour,
             GeneratorVariableCostInUSDperMWh,GeneratorVariableCostInUSDperMWh,LineFromBus,LineToBus,
             LineReactance,LineMaxFlow,Tipo_Generador,Generacion_renovable]
-    Results = UnitCommitmentFunction1(Data,x_values,u_values,v_values)
-    model = Results[1]
+    global Results = UnitCommitmentFunction1(Data,x_values,u_values,v_values)
+    global model = Results[1]
     if is_solved_and_feasible(model)
         global factibles
         factibles= factibles + 1
@@ -154,4 +154,4 @@ for iter in 1:100
         infactibles= infactibles+ 1
     end
 end
-println("Cantidad factibles", factibles)
+println("Cantidad factibles ", factibles)

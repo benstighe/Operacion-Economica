@@ -33,7 +33,7 @@ function UnitCommitmentFunction(Data)
     for i in GeneratorSet
         for t in TimeSet
             if Tipo_Generador[i]=="No renovable"
-            @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
+                @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
             end
         end
     end
@@ -53,7 +53,6 @@ function UnitCommitmentFunction(Data)
     @constraint(model, MinEncendido2[i in GeneratorSet, t in T-GeneratorMinimumUpTimeInHours[i]+1:T], sum(x[i,k] - u[i,t] 
     for k in t:T) >= 0)    
     
-
     #Min Up/Down:
     @constraint(model, MinApagado[i in GeneratorSet, t in 1:T-GeneratorMinimumDownTimeInHours[i]], sum(1-x[i,k] 
     for k in t:(t+GeneratorMinimumDownTimeInHours[i]-1)) >= GeneratorMinimumDownTimeInHours[i]*v[i,t])
@@ -79,6 +78,8 @@ function UnitCommitmentFunction(Data)
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
                 #para que no este encendido si no genera
                 @constraint(model,Pg[gen,t]>=x[gen,t])
+                @constraint(model,rup[gen,t]==0)
+                @constraint(model,rdown[gen,t]==0)
             elseif Tipo_Generador[gen]=="No renovable"
                 #renovable reserva para arriba
                 @constraint(model,Pg[gen,t]+rup[gen,t]<=GeneratorPmaxInMW[gen]*x[gen,t])
@@ -88,18 +89,6 @@ function UnitCommitmentFunction(Data)
     end
     @constraint(model,reservaup[t in 1:T],sum(rup[gen,t] for gen in GeneratorSet)>=reserva_99[t])
     @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_99[t])
-
-    #ESTO ES LO PENSADO POR NOSOTROS
-    # #esto es el caso si renovables generan menos de lo esperado
-    # @constraint(model, RES[t in 1:T], 
-    #     sum(GeneratorPmaxInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
-    #     +tot_percentil_99_inf[t]>= sum(Pd[i][t] for i in BusSet))
-    
-    #     #Si renovables generan mas de lo esperado
-    # @constraint(model, RES1[ t in 1:T], 
-    #     sum(GeneratorPminInMW[k]*x[k,t] for k in GeneratorSet if Tipo_Generador[k]=="No renovable")
-    #     +tot_percentil_99_sup[t] <= sum(Pd[i][t] for i in BusSet))
-
 
     # Optimizacion
     JuMP.optimize!(model)
@@ -242,8 +231,8 @@ for i in GeneratorSet
 end
 
 # Guardar los DataFrames en archivos CSV
-CSV.write("x_values.csv", data_x)
-CSV.write("u_values.csv", data_u)
-CSV.write("v_values.csv", data_v)
+CSV.write("x_values_99.csv", data_x)
+CSV.write("u_values_99.csv", data_u)
+CSV.write("v_values_99.csv", data_v)
 
 println("Valores de las variables binarias guardados en archivos CSV.")
