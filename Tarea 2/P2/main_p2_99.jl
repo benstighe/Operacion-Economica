@@ -87,8 +87,8 @@ function UnitCommitmentFunction(Data)
             end
         end
     end
-    @constraint(model,reservaup[t in 1:T],sum(rup[gen,t] for gen in GeneratorSet)>=reserva_99[t])
-    @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_99[t])
+    @constraint(model,reservaup[t in 1:T],sum(rup[gen,t] for gen in GeneratorSet)>=reserva_99_of[t])
+    @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_99_of[t])
 
     # Optimizacion
     JuMP.optimize!(model)

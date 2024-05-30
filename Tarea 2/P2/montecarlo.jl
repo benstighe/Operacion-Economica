@@ -15,8 +15,8 @@ Random.seed!(69)
 κ_t_eolico_array = collect(κ_t_eolico)
 κ_t_solar_array = collect(κ_t_solar)
 
-dev_estandar_eolico = lectura_ren_generacion[1:40, 1:24]
-dev_estandar_solar = lectura_ren_generacion[41:60, 1:24]
+dev_estandar_eolico = zeros(40,24)
+dev_estandar_solar = zeros(20,24)
 
 for i in 1:40
     for t in 1:24
@@ -139,38 +139,56 @@ tot_percentil_90_inf=[]
 tot_percentil_99_sup=[]
 tot_percentil_99_inf=[]
 tot_promedio=[]
-eol_90_sup=[]
+
 for t in 1:24
-    push!(eol_percentil_90_sup, mean([lista[t] for lista in suma_eolico_montecarlo])+(std([lista[t] for lista in suma_eolico_montecarlo])*1.645))
-    push!(eol_percentil_90_inf,mean([lista[t] for lista in suma_eolico_montecarlo])-(std([lista[t] for lista in suma_eolico_montecarlo])*1.645))
-    push!(eol_percentil_99_sup,mean([lista[t] for lista in suma_eolico_montecarlo])+(std([lista[t] for lista in suma_eolico_montecarlo])*2.575))
-    push!(eol_percentil_99_inf ,mean([lista[t] for lista in suma_eolico_montecarlo])-(std([lista[t] for lista in suma_eolico_montecarlo])*2.575))
-    push!(eol_promedio , mean([lista[t] for lista in suma_eolico_montecarlo]))
-    push!(sol_percentil_90_sup,  mean([lista[t] for lista in suma_solar_montecarlo])+(std([lista[t] for lista in suma_solar_montecarlo])*1.645))
-    push!(sol_percentil_90_inf , mean([lista[t] for lista in suma_solar_montecarlo])-(std([lista[t] for lista in suma_solar_montecarlo])*1.645))
-    push!(sol_percentil_99_sup , mean([lista[t] for lista in suma_solar_montecarlo])+(std([lista[t] for lista in suma_solar_montecarlo])*2.575))
-    push!(sol_percentil_99_inf , mean([lista[t] for lista in suma_solar_montecarlo])-(std([lista[t] for lista in suma_solar_montecarlo])*2.575))
-    push!(sol_promedio , mean([lista[t] for lista in suma_solar_montecarlo]))
-    push!(tot_percentil_90_sup , mean([lista[t] for lista in suma_total_montecarlo])+(std([lista[t] for lista in suma_total_montecarlo])*1.645))
-    push!(tot_percentil_90_inf , mean([lista[t] for lista in suma_total_montecarlo])-(std([lista[t] for lista in suma_total_montecarlo])*1.645))
-    push!(tot_percentil_99_sup , mean([lista[t] for lista in suma_total_montecarlo])+(std([lista[t] for lista in suma_total_montecarlo])*2.575))
-    push!(tot_percentil_99_inf , mean([lista[t] for lista in suma_total_montecarlo])-(std([lista[t] for lista in suma_total_montecarlo])*2.575))
-    push!(tot_promedio , mean([lista[t] for lista in suma_total_montecarlo]))
-    # push!(eol_percentil_90_sup, quantile([lista[t] for lista in suma_eolico_montecarlo], 0.90))
-    # push!(eol_percentil_90_inf,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.10))
-    # push!(eol_percentil_99_sup,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.99))
-    # push!(eol_percentil_99_inf ,quantile([lista[t] for lista in suma_eolico_montecarlo], 0.01))
-    # push!(eol_promedio , mean([lista[t] for lista in suma_eolico_montecarlo]))
-    # push!(sol_percentil_90_sup, quantile([lista[t] for lista in suma_solar_montecarlo], 0.90))
-    # push!(sol_percentil_90_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.10))
-    # push!(sol_percentil_99_sup , quantile([lista[t] for lista in suma_solar_montecarlo], 0.99))
-    # push!(sol_percentil_99_inf , quantile([lista[t] for lista in suma_solar_montecarlo], 0.01))
-    # push!(sol_promedio , mean([lista[t] for lista in suma_solar_montecarlo]))
-    # push!(tot_percentil_90_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.90))
-    # push!(tot_percentil_90_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.10))
-    # push!(tot_percentil_99_sup , quantile([lista[t] for lista in suma_total_montecarlo], 0.99))
-    # push!(tot_percentil_99_inf , quantile([lista[t] for lista in suma_total_montecarlo], 0.01))
-    # push!(tot_promedio , mean([lista[t] for lista in suma_total_montecarlo]))
+    global varianza_tot=0
+    global media=0
+    for i in 1:40
+        global varianza_tot=varianza_tot+(dev_estandar_eolico[i, t]^2)
+        global media= media + lectura_ren_generacion[i,t]
+    end
+    push!(eol_promedio,media)
+    push!(eol_percentil_90_sup,media+((varianza_tot^(0.5))*1.645))
+    push!(eol_percentil_90_inf,media-((varianza_tot^(0.5))*1.645))
+    push!(eol_percentil_99_sup,media+((varianza_tot^(0.5))*2.575))
+    push!(eol_percentil_99_inf,media-((varianza_tot^(0.5))*2.575))
+end
+
+for t in 1:24
+    global varianza_tot=0
+    global media=0
+    for i in 1:20
+        global varianza_tot=varianza_tot+(dev_estandar_solar[i, t]^2)
+        global media= media + lectura_ren_generacion[i+40,t]
+    end
+    push!(sol_promedio,media)
+    push!(sol_percentil_90_sup,media+((varianza_tot^(0.5))*1.645))
+    push!(sol_percentil_90_inf,media-((varianza_tot^(0.5))*1.645))
+    push!(sol_percentil_99_sup,media+((varianza_tot^(0.5))*2.575))
+    push!(sol_percentil_99_inf,media-((varianza_tot^(0.5))*2.575))
+end
+
+reserva_90_of=[]
+reserva_99_of=[]
+for t in 1:24
+    global varianza_tot=0
+    global media=0
+    for i in 1:40
+        global varianza_tot=varianza_tot+(dev_estandar_eolico[i, t]^2)
+        global media= media + lectura_ren_generacion[i,t]
+    end
+    for i in 1:20
+        global varianza_tot=varianza_tot+(dev_estandar_solar[i, t]^2)
+        global media= media + lectura_ren_generacion[i+40,t]
+    end
+    desv_total=varianza_tot^(0.5)
+    push!(tot_promedio,media)
+    push!(tot_percentil_90_sup,media+(desv_total*1.645))
+    push!(tot_percentil_90_inf,media-(desv_total*1.645))
+    push!(tot_percentil_99_sup,media+(desv_total*2.575))
+    push!(tot_percentil_99_inf,media-(desv_total*2.575))
+    push!(reserva_90_of,desv_total*1.645)
+    push!(reserva_99_of,desv_total*2.575)
 end
 
 # Iniciar el gráfico
@@ -209,22 +227,26 @@ plot!(horas,tot_percentil_99_inf,label="percentil_99(inf)",lw=3,color=:green)
 plot!(horas,tot_percentil_99_sup,label="percentil_99(sup)",lw=3,color=:green)
 plot!(horas,tot_promedio,label="Media",lw=3,color=:red)
 display(plot!())
-reserva_90=tot_promedio.-tot_percentil_90_inf
-reserva_99=tot_promedio.-tot_percentil_99_inf
 
 
-for iter in 1:100
-    lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
+
+# for iter in 1:100
+#     global lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
     
-    lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
+#     global lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
    
-    global prod_gen1 = [[] for gen in gen_list]
+#     global prod_gen1 = [[] for gen in gen_list]
    
-    for ren in lista_datos_eolico
-        push!(prod_gen1, ren)
-    end
-    for ren in lista_datos_solar
-        push!(prod_gen1, ren)
-    end
+#     for ren in lista_datos_eolico
+#         push!(prod_gen1, ren)
+#     end
+#     for ren in lista_datos_solar
+#         push!(prod_gen1, ren)
+#     end
+# end
 
-end
+
+
+# println("Reserva 90 antigua",reserva_90)
+# println("Reserva 90 nueva",reserva_90_of)
+# println("Reserva 99 ",reserva_99_of)

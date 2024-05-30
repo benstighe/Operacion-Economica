@@ -2,9 +2,9 @@ using JuMP, XLSX, Statistics, Gurobi, DataFrames, CSV
 include("lectura_datos118.jl")
 include("montecarlo.jl")
 # Leer los archivos CSV
-data_x = CSV.read("x_values_90.csv", DataFrame)
-data_u = CSV.read("u_values_90.csv", DataFrame)
-data_v = CSV.read("v_values_90.csv", DataFrame)
+data_x = CSV.read("x_values_99.csv", DataFrame)
+data_u = CSV.read("u_values_99.csv", DataFrame)
+data_v = CSV.read("v_values_99.csv", DataFrame)
 
 x_values = Dict((row.i, row.t) => row.x for row in eachrow(data_x))
 u_values = Dict((row.i, row.t) => row.u for row in eachrow(data_u))
@@ -139,7 +139,7 @@ for iter in 1:100
         push!(prod_gen, ren)
     end
     global Generacion_renovable=prod_gen
-    Data = [BusSet,TimeSet,GeneratorSet,LineSet,Pd,GeneratorBusLocation,GeneratorPminInMW,
+    global Data = [BusSet,TimeSet,GeneratorSet,LineSet,Pd,GeneratorBusLocation,GeneratorPminInMW,
             GeneratorPmaxInMW,GeneratorRampInMW,GeneratorStartUpShutDownRampInMW,GeneratorMinimumUpTimeInHours,
             GeneratorMinimumDownTimeInHours,GeneratorStartUpCostInUSD,GeneratorFixedCostInUSDperHour,
             GeneratorVariableCostInUSDperMWh,GeneratorVariableCostInUSDperMWh,LineFromBus,LineToBus,
