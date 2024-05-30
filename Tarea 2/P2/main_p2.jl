@@ -61,14 +61,6 @@ function UnitCommitmentFunction(Data)
     @constraint(model, MinApagado2[i in GeneratorSet, t in T-GeneratorMinimumDownTimeInHours[i]+1:T], sum(1 - x[i,k] - v[i,t] 
     for k in t:T) >= 0)
 
-#=
-    @constraint(model, MinUpTime[i in GeneratorSet, t in TimeSet], sum(x[i,k] for k in t-GeneratorMinimumUpTimeInHours[i]:t-1) >= 
-                GeneratorMinimumUpTimeInHours[i]*v[i,t])
-    
-    @constraint(model, MinDownTime[i in GeneratorSet, t in TimeSet], sum(1-x[i,k] for k in t-GeneratorMinimumDownTimeInHours[i]:t-1) >= 
-    GeneratorMinimumDownTimeInHours[i]*u[i,t])
-=#
-
     #Ramp Down 
     @constraint(model, RampasDown[i in GeneratorSet, t in 2:T], -GeneratorRampInMW[i]*x[i,t] 
         - GeneratorStartUpShutDownRampInMW[i]*v[i,t] <= Pg[i,t] - Pg[i,t-1])      
