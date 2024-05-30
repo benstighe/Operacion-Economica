@@ -1,6 +1,6 @@
 ### Load packages ###
 using JuMP, XLSX, Statistics, Gurobi, DataFrames
-include("lectura_datos.jl")
+include("lectura_datos_118_p1.jl")
 
 ### Function for solving unit commitment ###
 function UnitCommitmentFunction(Data)
@@ -156,6 +156,18 @@ costo_variable = sum(value(Pg[i, t]) * GeneratorVariableCostInUSDperMWh[i] for i
 println("Costo de encedido total: ", costo_startup)
 println("Costo fijo total: ", costo_fijo)
 println("Costo variable de generación total: ", costo_variable)
+
+println("--------------Generadores-------------")
+for t in 1:24
+    println("INSTANTE: ",t)
+    println("Cantidad generadores no renovables prendidos ",sum(value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables prendidos ",sum(value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+    println("Cantidad generadores no renovables comenzando a encender ",sum(value(u[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables comenzando a encender",sum(value(u[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+    println("Cantidad generadores no renovables apagando ",sum(value(v[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables apagando",sum(value(v[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+end
+
 
 costos_df = DataFrame(Variable=["Costo Total", "Costo de Encendido Total", "Costo Fijo Total", "Costo Variable Total"],
                       Valor=[JuMP.objective_value(model), costo_startup, costo_fijo, costo_variable])
