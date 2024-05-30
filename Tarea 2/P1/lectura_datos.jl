@@ -105,6 +105,7 @@ for i in eachindex(lectura_ren_bus)
 end
 
 #----------FIN LECTURA--------------#
+#=
 println("Lista renovables")
 println(lista_renovables)
 println("--------------------------------------------------------")
@@ -117,121 +118,121 @@ println("--------------------------------------------------------")
 println("Lista demandas")
 println(loads_list)
 println("--------------------------------------------------------")
-println("ID barras")
+#println("ID barras")=#
 id_buses = [load.ID_Bus for load in loads_list]
-println(id_buses)
-println("--------------------------------------------------------")
+#println(id_buses)
+#println("--------------------------------------------------------")
 #println("ID generadores")
 #println([i for i in 1:length(bus_gen)])
-println("--------------------------------------------------------")
-println("buses generadores")
+#println("--------------------------------------------------------")
+#println("buses generadores")
 bus_gen = [gen.Bus_Conexion for gen in gen_list]
 for ren in lista_renovables
     push!(bus_gen, ren.Bus_Conexion)
 end
-println(bus_gen)
-println("--------------------------------------------------------")
-println("ID lineas")
+#println(bus_gen)
+#println("--------------------------------------------------------")
+#println("ID lineas")
 id_lines = [line.ID for line in lines_list]
-println(id_lines)
-println("--------------------------------------------------------")
-println("Demanda")
+#println(id_lines)
+#println("--------------------------------------------------------")
+#println("Demanda")
 Pd=[load.Demanda for load in loads_list]
-println(Pd)
-println("--------------------------------------------------------")
-println("pmax generadores")
+#println(Pd)
+#println("--------------------------------------------------------")
+#println("pmax generadores")
 pmax_gen = [gen.Pmax for gen in gen_list]
 for ren in lista_renovables
     push!(pmax_gen, ren.Pmax)
 end
-println(pmax_gen)
-println("--------------------------------------------------------")
-println("tipo generadores")
+#println(pmax_gen)
+#println("--------------------------------------------------------")
+#println("tipo generadores")
 tipo_gen = ["No renovable" for gen in gen_list]
 for ren in lista_renovables
     push!(tipo_gen, "Renovable")
 end
-println(tipo_gen)
-println("--------------------------------------------------------")
-println("produccion generadores")
+#println(tipo_gen)
+#println("--------------------------------------------------------")
+#println("produccion generadores")
 prod_gen = [[] for gen in gen_list]
 for ren in lista_renovables
     vect=ren.Generation
     push!(prod_gen, vect)
 end
-println(prod_gen)
-println("--------------------------------------------------------")
-println("pmin generadores")
+#println(prod_gen)
+#println("--------------------------------------------------------")
+#println("pmin generadores")
 pmin_gen = [gen.Pmin for gen in gen_list]
 for ren in lista_renovables
     push!(pmin_gen, ren.Pmin)
 end
-println(pmin_gen)
-println("--------------------------------------------------------")
-println("rampa generadores")
+#println(pmin_gen)
+#println("--------------------------------------------------------")
+#println("rampa generadores")
 rampin_gen = [gen.Ramp for gen in gen_list]
 for ren in lista_renovables
     push!(rampin_gen, ren.Ramp)
 end
-println(rampin_gen)
-println("--------------------------------------------------------")
-println("Rampa start generadores")
+#println(rampin_gen)
+#println("--------------------------------------------------------")
+#println("Rampa start generadores")
 Srampin_gen = [gen.SRamp for gen in gen_list]
 for ren in lista_renovables
     push!(Srampin_gen, ren.SRamp)
 end
-println(Srampin_gen)
-println("--------------------------------------------------------")
-println("minup generadores")
+#println(Srampin_gen)
+#println("--------------------------------------------------------")
+#println("minup generadores")
 minup_gen = [gen.min_up for gen in gen_list]
 for ren in lista_renovables
     push!(minup_gen, ren.min_up)
 end
-println(minup_gen)
-println("--------------------------------------------------------")
-println("mindown generadores")
+#println(minup_gen)
+#println("--------------------------------------------------------")
+#println("mindown generadores")
 mindown_gen = [gen.min_down for gen in gen_list]
 for ren in lista_renovables
     push!(mindown_gen, ren.min_down)
 end
-println(mindown_gen)
-println("--------------------------------------------------------")
-println("costo encendido generadores")
+#println(mindown_gen)
+#println("--------------------------------------------------------")
+#println("costo encendido generadores")
 st_cost_gen = [gen.CEncendido for gen in gen_list]
 for ren in lista_renovables
     push!(st_cost_gen, ren.CEncendido)
 end
-println(st_cost_gen)
-println("--------------------------------------------------------")
-println("costo fijo generadores")
+#println(st_cost_gen)
+#println("--------------------------------------------------------")
+#println("costo fijo generadores")
 fx_cost_gen = [gen.CFijo for gen in gen_list]
 for ren in lista_renovables
     push!(fx_cost_gen, ren.CFijo)
 end
-println(fx_cost_gen)
-println("--------------------------------------------------------")
-println("costo variable generadores")
+#println(fx_cost_gen)
+#println("--------------------------------------------------------")
+#println("costo variable generadores")
 v_cost_gen = [gen.Cvariable for gen in gen_list]
 for ren in lista_renovables
     push!(v_cost_gen, ren.Cvariable)
 end
-println(v_cost_gen)
-println("--------------------------------------------------------")
-println("ID lineas")
-println(id_lines)
-println("--------------------------------------------------------")
-println("from lineas")
+#println(v_cost_gen)
+#println("--------------------------------------------------------")
+#println("ID lineas")
+#println(id_lines)
+#println("--------------------------------------------------------")
+#println("from lineas")
 frombus_lines = [line.FromBus for line in lines_list]
-println(frombus_lines)
-println("--------------------------------------------------------")
-println("to lineas")
+#println(frombus_lines)
+#println("--------------------------------------------------------")
+#println("to lineas")
 tobus_lines = [line.ToBus for line in lines_list]
-println(tobus_lines)
-println("--------------------------------------------------------")
-println("reactancia lineas")
+#println(tobus_lines)
+#println("--------------------------------------------------------")
+#println("reactancia lineas")
 Xbus_lines = [line.X for line in lines_list]
-println(Xbus_lines)
-println("--------------------------------------------------------")
-println("flujo maximo lineas")
+#println(Xbus_lines)
+#println("--------------------------------------------------------")
+#println("flujo maximo lineas")
 fmax_lines = [line.Fmax for line in lines_list]
-println(fmax_lines)
+#println(fmax_lines)
