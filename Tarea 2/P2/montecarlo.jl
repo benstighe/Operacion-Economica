@@ -190,6 +190,17 @@ for t in 1:24
     push!(reserva_99_of,desv_total*2.575)
 end
 
+reserva_90_of_rial=[]
+reserva_99_of_rial=[]
+#otra forma
+for t in 1:24
+    desveol=eol_promedio[t]*κ_t_eolico_array[t]
+    desvsol=sol_promedio[t]*κ_t_solar_array[t]
+    desv= (((40/60)*((desveol)^2))+((20/60)*((desvsol)^2)))^(0.5)
+    push!(reserva_90_of_rial,desv*1.645)
+    push!(reserva_99_of_rial,desv*2.575)
+end
+
 # Iniciar el gráfico
 horas = 1:24
 plot()

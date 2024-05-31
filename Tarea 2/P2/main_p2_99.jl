@@ -79,7 +79,7 @@ function UnitCommitmentFunction(Data)
                 #para que no este encendido si no genera
                 @constraint(model,Pg[gen,t]>=x[gen,t])
                 @constraint(model,r[gen,t]==0)
-                # @constraint(model,rdown[gen,t]==0)
+                #@constraint(model,rdown[gen,t]==0)
             elseif Tipo_Generador[gen]=="No renovable"
                 #renovable reserva para arriba
                 @constraint(model,Pg[gen,t]+r[gen,t]<=GeneratorPmaxInMW[gen]*x[gen,t])
@@ -87,8 +87,8 @@ function UnitCommitmentFunction(Data)
             end
         end
     end
-    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_99_of[t])
-    # @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_99_of[t])
+    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_99_of_rial[t])
+    #@constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)==reserva_90_of[t])
 
     # Optimizacion
     JuMP.optimize!(model)
@@ -164,12 +164,13 @@ for t in 1:24
     println("Limite inferior 90 ",tot_percentil_90_inf[t])
     println("Limite inferior 99 ",tot_percentil_99_inf[t])
     println("Limite sup 90 ",tot_percentil_90_sup[t])
-    println("Limite inferior 99 ",tot_percentil_99_inf[t])
+    println("Limite sup 99 ",tot_percentil_99_sup[t])
     println("Cantidad max generadores ",sum(GeneratorPmaxInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
     println("Cantidad min generadores ",sum(GeneratorPminInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
     println("Suma reserva up ", sum(value(r[k, t]) for k in GeneratorSet))
     #println("Suma reserva down ", sum(value(rdown[k, t]) for k in GeneratorSet))
 end
+
 println("--------------Generadores-------------")
 for t in 1:24
     println("INSTANTE: ",t)
@@ -218,9 +219,9 @@ XLSX.openxlsx("resultados_p1.xlsx", mode="w") do xf
     XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
 end
 #LLENAMOS CSV para la otra pregunta
-data_x1 = DataFrame(i=Int[], t=Int[], x=Int[])
-data_u1 = DataFrame(i=Int[], t=Int[], u=Int[])
-data_v1 = DataFrame(i=Int[], t=Int[], v=Int[])
+data_x1 = DataFrame(i=Int[], t=Int[], x=Float64[])
+data_u1 = DataFrame(i=Int[], t=Int[], u=Float64[])
+data_v1 = DataFrame(i=Int[], t=Int[], v=Float64[])
 
 for i in GeneratorSet
     for t in TimeSet

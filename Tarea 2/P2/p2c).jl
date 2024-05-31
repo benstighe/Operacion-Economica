@@ -40,7 +40,7 @@ function UnitCommitmentFunction1(Data,x,u,v)
         end
     end
 
-    @constraint(model, FixAngleAtReferenceBusConstraint[i in 1:1, t in 1:T], Theta[i,t] == 0) # Angulo del bus de referencia
+    #@constraint(model, FixAngleAtReferenceBusConstraint[i in 1:1, t in 1:T], Theta[i,t] == 0) # Angulo del bus de referencia
 
     @constraint(model, DCPowerFlowConstraint[i in BusSet, t in 1:T], 
         sum(Pg[k,t] for k in GeneratorSet if GeneratorBusLocation[k] == i)
@@ -70,9 +70,9 @@ function UnitCommitmentFunction1(Data,x,u,v)
     @constraint(model, RampasUp[i in GeneratorSet, t in 2:T], Pg[i,t] - Pg[i,t-1] <= GeneratorRampInMW[i]*x[(i, t-1)] + 
         GeneratorStartUpShutDownRampInMW[i]*u[(i, t)])#se pone t-1 ya que si se pone t cuando se prende se sumarian las dos ramplas
 
-    # # transmission line limits
-    # @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
-    #     Theta[LineToBus[i],t]) <= LineMaxFlow[i])
+    # transmission line limits
+    @constraint(model, CapacidadesLineas[i in LineSet, t in 1:T], -LineMaxFlow[i]<= (1/LineReactance[i]) * (Theta[LineFromBus[i],t] - 
+        Theta[LineToBus[i],t]) <= LineMaxFlow[i])
 
     #Generador renovables
     for gen in 1:length(GeneratorSet)
