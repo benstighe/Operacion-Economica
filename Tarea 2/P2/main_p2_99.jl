@@ -88,7 +88,7 @@ function UnitCommitmentFunction(Data)
             end
         end
     end
-    #Para tener 13 
+    #Para tener 80
     @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=reserva_99_of_rial_otros[t])
     #Para tener mas (puede dar infactible)
     #@constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_99_of_rial_otros[t])
