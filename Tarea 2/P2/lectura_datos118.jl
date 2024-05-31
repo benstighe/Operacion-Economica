@@ -199,21 +199,21 @@ end
 #println("costo encendido generadores")
 st_cost_gen = [gen.CEncendido for gen in gen_list]
 for ren in lista_renovables
-    push!(st_cost_gen, ren.CEncendido+0.001)
+    push!(st_cost_gen, ren.CEncendido)
 end
 #println(st_cost_gen)
 #println("--------------------------------------------------------")
 #println("costo fijo generadores")
 fx_cost_gen = [gen.CFijo for gen in gen_list]
 for ren in lista_renovables
-    push!(fx_cost_gen, ren.CFijo+0.001)
+    push!(fx_cost_gen, ren.CFijo)
 end
 #println(fx_cost_gen)
 #println("--------------------------------------------------------")
 #println("costo variable generadores")
 v_cost_gen = [gen.Cvariable for gen in gen_list]
 for ren in lista_renovables
-    push!(v_cost_gen, ren.Cvariable+0.001)
+    push!(v_cost_gen, ren.Cvariable)
 end
 #println(v_cost_gen)
 #println("--------------------------------------------------------")

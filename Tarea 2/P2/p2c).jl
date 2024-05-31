@@ -138,6 +138,19 @@ for iter in 1:100
     for ren in lista_datos_solar
         push!(prod_gen1, ren)
     end
+    totall=[]
+    for t in 1:24
+        total=0
+        for i in 1:40
+            total=total + eolico_montecarlo[iter][i,t]
+        end
+        for i in 1:20
+            total=total + solar_montecarlo[iter][i,t]
+        end
+        push!(totall,total)
+        println(tot_promedio[t]-total)
+    end
+    
     global Generacion_renovable=prod_gen1
     global Data = [BusSet,TimeSet,GeneratorSet,LineSet,Pd,GeneratorBusLocation,GeneratorPminInMW,
             GeneratorPmaxInMW,GeneratorRampInMW,GeneratorStartUpShutDownRampInMW,GeneratorMinimumUpTimeInHours,
