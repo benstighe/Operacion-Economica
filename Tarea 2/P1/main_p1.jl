@@ -135,21 +135,6 @@ model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results
 println("Total cost: ", JuMP.objective_value(model))
 
 
-
-for i in GeneratorSet
-    for t in TimeSet
-#=        println("Costos de generación para el generador ", i, " en el tiempo ", t, ": ", 
-        JuMP.value(Pg[i,t])*GeneratorVariableCostInUSDperMWh[i] )
-
-        println("Costos de encender para el generador ", i, " en el tiempo ", t, ": ", 
-        GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )
-
-        println("Costos de  para el generador ", i, " en el tiempo ", t, ": ", 
-        GeneratorStartUpCostInUSD[i] * JuMP.value(u[i,t]) )=#
-        #println("i, t, x[i,t], Pg[i,t]: ", i, ", ", t, ", ", JuMP.value(x[i,t]), ", ", JuMP.value(Pg[i,t]))
-    end
-end
-
 costo_startup = sum(value(u[i, t]) * GeneratorStartUpCostInUSD[i] for i in GeneratorSet for t in 1:24)
 costo_fijo = sum(value(x[i, t]) * GeneratorFixedCostInUSDperHour[i] for i in GeneratorSet for t in 1:24)
 costo_variable = sum(value(Pg[i, t]) * GeneratorVariableCostInUSDperMWh[i] for i in GeneratorSet for t in 1:24)

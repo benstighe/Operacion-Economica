@@ -5,7 +5,7 @@ using Distributions, Plots, Random,Statistics
 
 include("lectura_datos118.jl")
 
-Random.seed!(69)
+Random.seed!(89)
 
 # Generar rangos de κ_t utilizando LinRange
 κ_t_eolico = LinRange(14.70, 30.92, 24) / 100
@@ -56,26 +56,6 @@ for escenario in 1:100
         end
     end
 end
-#-----------------------PARA GRAFICAR LOS 100*24 casos------------------
-
-# # Graficar los 100 escenarios de generación eólica
-# plot_eolico = plot(title="Escenarios de generación eólica", xlabel="Hora", ylabel="Generación", label=nothing)
-
-# for escenario in 1:100
-#     plot!(1:24, eolico_pronostico_escenarios[:, :, escenario]', alpha=0.3, label=nothing)
-# end
-
-# display(plot_eolico)
-
-# # Graficar los 100 escenarios de generación solar
-# plot_solar = plot(title="Escenarios de generación solar", xlabel="Hora", ylabel="Generación", label=nothing)
-
-# for escenario in 1:100
-#     plot!(1:24, solar_pronostico_escenarios[:, 1:24, escenario]', alpha=0.3, label=nothing)
-# end
-
-# display(plot_solar)
-#--------------------------------FIN graficar---------------------------
 
 #creo sus largos
 eolico_pronostico = zeros(40,24)
@@ -190,6 +170,7 @@ for t in 1:24
     push!(reserva_99_of,desv_total*2.575)
 end
 
+#OTRAS FORMAS PARA VER RESERVAS (NO SE UTILIZARON)
 reserva_90_of_rial=[]
 reserva_99_of_rial=[]
 reserva_90_of_rial_g=[]
@@ -219,7 +200,7 @@ horas = 1:24
 plot()
 plot(title = "Generación Eólica")
 for lista in suma_eolico_montecarlo
-    plot!(horas, lista, label="", lw=1)  # `label=""` para no mostrar etiquetas y `lw=1` para líneas delgadas
+    plot!(horas, lista, label="", lw=1)  
 end
 plot!(horas,eol_percentil_90_inf,label="percentil_90(inf)",lw=5,color=:blue)
 plot!(horas,eol_percentil_90_sup,label="percentil_90(sup)",lw=5,color=:blue)
@@ -239,6 +220,7 @@ plot!(horas,sol_percentil_99_inf,label="percentil_99(inf)",lw=2,color=:green)
 plot!(horas,sol_percentil_99_sup,label="percentil_99(sup)",lw=2,color=:green)
 plot!(horas,sol_promedio,label="Media",lw=2,color=:red)
 display(plot!())
+#TOTAL
 plot()
 plot(title = "Generación Total")
 for lista in suma_total_montecarlo
@@ -250,26 +232,3 @@ plot!(horas,tot_percentil_99_inf,label="percentil_99(inf)",lw=3,color=:green)
 plot!(horas,tot_percentil_99_sup,label="percentil_99(sup)",lw=3,color=:green)
 plot!(horas,tot_promedio,label="Media",lw=3,color=:red)
 display(plot!())
-
-
-
-# for iter in 1:100
-#     global lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
-    
-#     global lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
-   
-#     global prod_gen1 = [[] for gen in gen_list]
-   
-#     for ren in lista_datos_eolico
-#         push!(prod_gen1, ren)
-#     end
-#     for ren in lista_datos_solar
-#         push!(prod_gen1, ren)
-#     end
-# end
-
-
-
-# println("Reserva 90 antigua",reserva_90)
-# println("Reserva 90 nueva",reserva_90_of)
-# println("Reserva 99 ",reserva_99_of)
