@@ -194,16 +194,24 @@ reserva_90_of_rial=[]
 reserva_99_of_rial=[]
 reserva_90_of_rial_g=[]
 reserva_99_of_rial_g=[]
+reserva_90_of_rial_otros=[]
+reserva_99_of_rial_otros=[]
 #otra forma
 for t in 1:24
     desveol=eol_promedio[t]*κ_t_eolico_array[t]
     desvsol=sol_promedio[t]*κ_t_solar_array[t]
+    reservaeol90=desveol*1.645
+    reservaeol99=desveol*2.575
+    reservasol90=desvsol*1.645
+    reservasol99=desvsol*2.575
     desvgrande=(eol_promedio[t]+sol_promedio[t])*(((40/60)*κ_t_eolico_array[t])+((20/60)*κ_t_solar_array[t]))
     desv= (((40/60)*((desveol)^2))+((20/60)*((desvsol)^2)))^(0.5)
     push!(reserva_90_of_rial,desv*1.645)
     push!(reserva_99_of_rial,desv*2.575)
     push!(reserva_90_of_rial_g,desvgrande*1.645)
     push!(reserva_99_of_rial_g,desvgrande*2.575)
+    push!(reserva_90_of_rial_otros,reservaeol90+reservasol90)
+    push!(reserva_99_of_rial_otros,reservaeol99+reservasol99)
 end
 
 # Iniciar el gráfico
