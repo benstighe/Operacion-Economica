@@ -87,7 +87,7 @@ function UnitCommitmentFunction(Data)
             end
         end
     end
-    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_90_of_rial[t])
+    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_90_of_rial_g[t])
     #@constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)==reserva_90_of[t])
 
     # Optimizacion

@@ -77,7 +77,7 @@ function UnitCommitmentFunction(Data)
             if Tipo_Generador[gen]=="Renovable"
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
                 #para que no este encendido si no genera
-                @constraint(model,Pg[gen,t]>=x[gen,t])
+                #@constraint(model,Pg[gen,t]>=x[gen,t])
                 @constraint(model,r[gen,t]==0)
                 #@constraint(model,rdown[gen,t]==0)
             elseif Tipo_Generador[gen]=="No renovable"
@@ -87,7 +87,7 @@ function UnitCommitmentFunction(Data)
             end
         end
     end
-    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_99_of_rial[t])
+    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=reserva_99_of_rial_g[t])
     #@constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)==reserva_90_of[t])
 
     # Optimizacion

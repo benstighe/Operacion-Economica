@@ -213,7 +213,7 @@ end
 #println("costo variable generadores")
 v_cost_gen = [gen.Cvariable for gen in gen_list]
 for ren in lista_renovables
-    push!(v_cost_gen, ren.Cvariable)
+    push!(v_cost_gen, ren.Cvariable+0.000001)
 end
 #println(v_cost_gen)
 #println("--------------------------------------------------------")
