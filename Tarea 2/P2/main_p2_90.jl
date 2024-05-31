@@ -20,7 +20,7 @@ function UnitCommitmentFunction(Data)
     @variable(model, Pg[GeneratorSet,TimeSet]) #Pg : Cantidad de energía generada en MWh
     @variable(model, Theta[BusSet,TimeSet]) # Theta es el defase (angulo)
     @variable(model, r[GeneratorSet,TimeSet])
-    #@variable(model, rdown[GeneratorSet,TimeSet])
+    @variable(model, rdown[GeneratorSet,TimeSet])
 
     @objective(model, Min,  sum(GeneratorFixedCostInUSDperHour[i] * x[i,t]
                             + GeneratorStartUpCostInUSD[i] * u[i,t]
@@ -29,14 +29,14 @@ function UnitCommitmentFunction(Data)
     @constraint(model, LogicConstraintBorder[i in GeneratorSet, t in 1:1], x[i,t] - 0 == u[i,t] - v[i,t]) #Restricción binaria en tiempo 1
     @constraint(model, LogicConstraint[i in GeneratorSet, t in 2:T], x[i,t] - x[i,t-1] == u[i,t] - v[i,t]) #Restricción binaria para el resto del tiempo.
 
-    @constraint(model, PMinConstraint[i in GeneratorSet, t in 1:T], GeneratorPminInMW[i] * x[i,t] <= Pg[i,t]) # Pmin <= Pg
-    for i in GeneratorSet
-        for t in TimeSet
-            if Tipo_Generador[i]=="No renovable"
-                @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
-            end
-        end
-    end
+    # @constraint(model, PMinConstraint[i in GeneratorSet, t in 1:T], GeneratorPminInMW[i] * x[i,t] <= Pg[i,t]) # Pmin <= Pg
+    # for i in GeneratorSet
+    #     for t in TimeSet
+    #         if Tipo_Generador[i]=="No renovable"
+    #             @constraint(model, Pg[i,t] <= GeneratorPmaxInMW[i] * x[i,t]) # Pmax >= Pg
+    #         end
+    #     end
+    # end
     @constraint(model, FixAngleAtReferenceBusConstraint[i in 1:1, t in 1:T], Theta[i,t] == 0) # Angulo del bus de referencia
 
     @constraint(model, DCPowerFlowConstraint[i in BusSet, t in 1:T], 
@@ -77,23 +77,23 @@ function UnitCommitmentFunction(Data)
             if Tipo_Generador[gen]=="Renovable"
                 @constraint(model,Pg[gen,t]<=Generacion_renovable[gen][t]*x[gen,t])
                 #para que no este encendido si no genera
-                #@constraint(model,Pg[gen,t]>=x[gen,t])
+                @constraint(model,Pg[gen,t]>=x[gen,t])
                 @constraint(model,r[gen,t]==0)
-                #@constraint(model,rdown[gen,t]==0)
+                @constraint(model,rdown[gen,t]==0)
             elseif Tipo_Generador[gen]=="No renovable"
                 #renovable reserva para arriba
                 @constraint(model,Pg[gen,t]+r[gen,t]<=GeneratorPmaxInMW[gen]*x[gen,t])
-                @constraint(model,Pg[gen,t]-r[gen,t]>=GeneratorPminInMW[gen]*x[gen,t])
+                @constraint(model,Pg[gen,t]-rdown[gen,t]>=GeneratorPminInMW[gen]*x[gen,t])
             end
         end
     end
-    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=2*reserva_90_of_rial_g[t])
-    #@constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)==reserva_90_of[t])
+    @constraint(model,reservaup[t in 1:T],sum(r[gen,t] for gen in GeneratorSet)>=reserva_90_of_rial_otros[t])
+    @constraint(model,reservadown[t in 1:T],sum(rdown[gen,t] for gen in GeneratorSet)>=reserva_90_of_rial_otros[t])
 
     # Optimizacion
     JuMP.optimize!(model)
 
-    return [model,x,u,v,Pg,r]#,rdown]
+    return [model,x,u,v,Pg,r,rdown]
 end
 
 ### Unit commitment example ###
@@ -131,7 +131,7 @@ GeneratorVariableCostInUSDperMWh,GeneratorVariableCostInUSDperMWh,LineFromBus,Li
 LineReactance,LineMaxFlow,Tipo_Generador,Generacion_renovable]
 
 Results = UnitCommitmentFunction(Data)
-model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5] ;r = Results[6] ;#rdown = Results[7] ;
+model = Results[1]; x = Results[2]; u = Results[3]; v = Results[4]; Pg = Results[5] ;r = Results[6] ;rdown = Results[7] ;
 
 println("Total cost: ", JuMP.objective_value(model))
 
@@ -168,7 +168,7 @@ for t in 1:24
     println("Cantidad max generadores ",sum(GeneratorPmaxInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
     println("Cantidad min generadores ",sum(GeneratorPminInMW[k]*value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
     println("Suma reserva up ", sum(value(r[k, t]) for k in GeneratorSet))
-    #println("Suma reserva down ", sum(value(rdown[k, t]) for k in GeneratorSet))
+    println("Suma reserva down ", sum(value(rdown[k, t]) for k in GeneratorSet))
 end
 
 println("--------------Generadores-------------")
@@ -237,3 +237,60 @@ CSV.write("u_values_90.csv", data_u)
 CSV.write("v_values_90.csv", data_v)
 
 println("Valores de las variables binarias guardados en archivos CSV.")
+
+
+
+costo_startup = sum(value(u[i, t]) * GeneratorStartUpCostInUSD[i] for i in GeneratorSet for t in 1:24)
+costo_fijo = sum(value(x[i, t]) * GeneratorFixedCostInUSDperHour[i] for i in GeneratorSet for t in 1:24)
+costo_variable = sum(value(Pg[i, t]) * GeneratorVariableCostInUSDperMWh[i] for i in GeneratorSet for t in 1:24)
+println("Costo de encedido total: ", costo_startup)
+println("Costo fijo total: ", costo_fijo)
+println("Costo variable de generación total: ", costo_variable)
+
+println("--------------Generadores-------------")
+for t in 1:24
+    println("INSTANTE: ",t)
+    println("Cantidad generadores no renovables prendidos ",sum(value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables prendidos ",sum(value(x[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+    println("Cantidad generadores no renovables comenzando a encender ",sum(value(u[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables comenzando a encender",sum(value(u[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+    println("Cantidad generadores no renovables apagando ",sum(value(v[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="No renovable"))
+    println("Cantidad generadores renovables apagando",sum(value(v[k, t]) for k in GeneratorSet if Tipo_Generador[k]=="Renovable"))
+end
+
+
+costos_df = DataFrame(Variable=["Costo Total", "Costo de Encendido Total", "Costo Fijo Total", "Costo Variable Total"],
+                      Valor=[JuMP.objective_value(model), costo_startup, costo_fijo, costo_variable])
+
+
+generacion_df = DataFrame(Generador=GeneratorSet)
+
+for t in 1:24
+    generacion_df[!, Symbol("Hora $t")] = [JuMP.value(Pg[i, t]) for i in GeneratorSet]
+end
+transposed_df = permutedims(generacion_df)
+rename!(transposed_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
+delete!(transposed_df,[1])
+insertcols!(transposed_df , 1 , "Hora" => TimeSet)
+insertcols!(transposed_df , 9 , "Demanda horaria" => [sum(Pd[i][t] for i in BusSet) for t in TimeSet])
+
+
+onoff_df = DataFrame(Generador=GeneratorSet)
+
+for t in 1:24
+    onoff_df[!, Symbol("Hora $t")] = [JuMP.value(x[i, t]) for i in GeneratorSet]
+end
+transposed_onoff_df = permutedims(onoff_df)
+#println(transposed_onoff_df)
+rename!(transposed_onoff_df, ["x$t" => "Generador $i" for (t , i) in enumerate(GeneratorSet)])
+delete!(transposed_onoff_df,[1])
+insertcols!(transposed_onoff_df , 1 , "Hora" => TimeSet)
+
+XLSX.openxlsx("resultados_p2_b.xlsx", mode="w") do xf
+    XLSX.addsheet!(xf, "Estado ON-OFF")
+    XLSX.addsheet!(xf, "Generación")
+    XLSX.writetable!(xf["Generación"], Tables.columntable(transposed_df))
+    XLSX.writetable!(xf["Estado ON-OFF"], Tables.columntable(transposed_onoff_df))
+    XLSX.addsheet!(xf, "Costos")
+    XLSX.writetable!(xf["Costos"], Tables.columntable(costos_df))
+end
