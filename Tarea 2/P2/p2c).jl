@@ -110,7 +110,7 @@ Generacion_renovable=prod_gen
 
 factibles = 0
 infactibles = 0
-
+costo=0
 for iter in 1:100
     global lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
     global lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
@@ -132,6 +132,8 @@ for iter in 1:100
     if is_solved_and_feasible(model)
         global factibles
         factibles= factibles + 1
+        global costo
+        costo= costo + JuMP.objective_value(model)
     else
         global infactibles
         infactibles= infactibles+ 1
@@ -142,7 +144,7 @@ end
 
 factibles1 = 0
 infactibles1 = 0
-
+costo1=0
 for iter in 1:100
     global lista_datos_eolico=collect(eachrow(eolico_montecarlo[iter]))
     global lista_datos_solar=collect(eachrow(solar_montecarlo[iter]))
@@ -164,6 +166,8 @@ for iter in 1:100
     if is_solved_and_feasible(model)
         global factibles1
         factibles1= factibles1 + 1
+        global costo1
+        costo1=costo1+ JuMP.objective_value(model)
     else
         global infactibles1
         infactibles1= infactibles1+ 1
@@ -171,4 +175,6 @@ for iter in 1:100
 end
 
 println("Cantidad factibles 90 ", factibles)
+println("Costo promedio_90 ", costo/factibles)
 println("Cantidad factibles 99 ", factibles1)
+println("Costo promedio_99 ", costo1/factibles1)
