@@ -3,7 +3,7 @@ using Gurobi
 using Plots
 using DataFrames
 using StatsPlots
-
+using Statistics
 function subproblem_builder(subproblem::Model, node::Int)
     # State variables
     @variable(subproblem, 0 <= volume <= 300, SDDP.State, initial_value = 100)
@@ -40,7 +40,7 @@ model = SDDP.LinearPolicyGraph(
     lower_bound = 0.0,
     optimizer = Gurobi.Optimizer,
 )
-SDDP.train(model; iteration_limit = 20) #ESTE ES EL N QUE PIDEN CAMBIAR
+SDDP.train(model; iteration_limit = 50) #ESTE ES EL N QUE PIDEN CAMBIAR
 simulations = SDDP.simulate(
     # The trained model to simulate.
     model,
@@ -59,10 +59,10 @@ for replication in 1:100
         push!(volumen_almacenado, (Semana = stage, Replicación = replication, Volumen = simulations[replication][stage][:volume].out))
     end
 end
-println(volumen_almacenado)
+#println(volumen_almacenado)
 # Convertir el DataFrame a un formato largo
 long_df = stack(volumen_almacenado, [:Volumen], [:Semana, :Replicación])
-
+#println(long_df)
 # Graficar
 plot()
 for replication in 1:100
@@ -74,23 +74,23 @@ end
 title!("Volumen de Agua Almacenada al Final de Cada Semana")
 xlabel!("Semana")
 ylabel!("Volumen Almacenado [MWh]")
+display(plot!())
+semanas = unique(volumen_almacenado[!, :Semana])
+mean_volumes = [mean(filter(row -> row[:Semana] == semana, volumen_almacenado)[!, :Volumen]) for semana in semanas]
+median_volumes = [median(filter(row -> row[:Semana] == semana, volumen_almacenado)[!, :Volumen]) for semana in semanas]
+std_volumes = [std(filter(row -> row[:Semana] == semana, volumen_almacenado)[!, :Volumen]) for semana in semanas]
+percentil_90 = [quantile(filter(row -> row[:Semana] == semana, volumen_almacenado)[!, :Volumen],0.9) for semana in semanas]
+percentil_10 = [quantile(filter(row -> row[:Semana] == semana, volumen_almacenado)[!, :Volumen],0.1) for semana in semanas]
 
+# Graficar media, mediana e intervalos de confianza
+plot()
+plot(semanas, mean_volumes, label="Media", lw=2)
+plot!(semanas, median_volumes, label="Mediana", lw=2)
+plot!(semanas, percentil_90,label="Percentil 90")
+plot!(semanas, percentil_10,label="Percentil 10")
 
-
-
-# replication = 1
-# stage = 2
-# println(simulations[replication][stage])
-# outgoing_volume = map(simulations[1]) do node
-#     return node[:volume].out
-# end
-
-# thermal_generation = map(simulations[1]) do node
-#     return node[:thermal_generation]
-# end
-# objectives = map(simulations) do simulation
-#     return sum(stage[:stage_objective] for stage in simulation)
-# end
-
-# μ, ci = SDDP.confidence_interval(objectives)
-# println("Confidence interval: ", μ, " ± ", ci)
+# Configuración de la gráfica
+title!("Media, Mediana e Intervalos de Confianza del Volumen de Agua Almacenada")
+xlabel!("Semana")
+ylabel!("Volumen Almacenado [MWh]")
+display(plot!())
