@@ -33,6 +33,7 @@ function subproblem_builder(subproblem::Model, node::Int)
     @stageobjective(subproblem, 50* thermal_generation_1+100* thermal_generation_2+150* thermal_generation_3)
     return subproblem
 end
+
 model = SDDP.LinearPolicyGraph(
     subproblem_builder;
     stages = 100, #cantidad semanas
@@ -40,7 +41,7 @@ model = SDDP.LinearPolicyGraph(
     lower_bound = 0.0,
     optimizer = Gurobi.Optimizer,
 )
-SDDP.train(model; iteration_limit = 50) #ESTE ES EL N QUE PIDEN CAMBIAR
+SDDP.train(model; iteration_limit = 100) #ESTE ES EL N QUE PIDEN CAMBIAR
 simulations = SDDP.simulate(
     # The trained model to simulate.
     model,
@@ -71,7 +72,7 @@ for replication in 1:100
 end
 
 # Configuración de la gráfica
-title!("Volumen de Agua Almacenada al Final de Cada Semana")
+title!("Volumen de Agua Almacenada al Final de Cada Semana", titlefontsize=10)
 xlabel!("Semana")
 ylabel!("Volumen Almacenado [MWh]")
 display(plot!())
@@ -90,7 +91,7 @@ plot!(semanas, percentil_90,label="Percentil 90")
 plot!(semanas, percentil_10,label="Percentil 10")
 
 # Configuración de la gráfica
-title!("Media, Mediana e Intervalos de Confianza del Volumen de Agua Almacenada")
+title!("Media, Mediana y Percentiles del Volumen de Agua Almacenada", titlefontsize=10)
 xlabel!("Semana")
 ylabel!("Volumen Almacenado [MWh]")
 display(plot!())

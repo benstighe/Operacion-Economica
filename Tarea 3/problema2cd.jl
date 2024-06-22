@@ -54,7 +54,7 @@ for limit in iteration_limits
     price = price_dict[:volume]
     
     println("Iteration limit: $limit, Cost: $cost, Price: $price")
-    push!(results, (iteration_limit = limit, cost = cost, price = price))
+    push!(results, (iteration_limit = limit, cost = cost, price = -price))
 end
 
 # Graficar los resultados
